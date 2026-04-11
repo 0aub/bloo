@@ -132,11 +132,10 @@ export function registerBoardTools(server: McpServer, boardStore: BoardStore, hi
           await historyStore.createSnapshot(board.id, board);
         }
 
-        let output: string;
         const format = args.format;
 
+        let output: string;
         if (format === 'html') {
-          // Import renderer dynamically to avoid circular deps during initial load
           const { renderBoardToHtml } = await import('../renderer/html-renderer.js');
           output = renderBoardToHtml(board, {
             includeTimeline: args.include_timeline !== false,

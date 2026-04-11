@@ -1,4 +1,4 @@
-import type { Board, Section, Element, SectionCategory } from '../models/board.js';
+import type { Board, Element, SectionCategory } from '../models/board.js';
 import type { NoteData, TextBlockData } from '../models/elements.js';
 import { getRenderer } from './diagram-renderers/index.js';
 import { getStatusColor } from './theme.js';
@@ -214,36 +214,57 @@ function autoLayout(cards: CardInfo[]): { width: number; height: number } {
     sectionHeights.set(secId, h);
   }
 
-  // Step 2: Arrange sections in rows of 3, place cards with bin-packing
-  let totalW = 0;
+  // Step 2: First pass — compute row widths to find the widest row
+  let maxRowW = 0;
   let curY = PAD;
 
+  // Compute each row's total width
+  const rowInfos: Array<{ sections: string[]; rowW: number; rowH: number }> = [];
   for (let i = 0; i < sectionOrder.length; i += SECTIONS_PER_ROW) {
     const rowSections = sectionOrder.slice(i, i + SECTIONS_PER_ROW);
-
-    // Row height = tallest section
-    let rowMaxH = 0;
+    let rowW = 0;
+    let rowH = 0;
     for (const secId of rowSections) {
-      rowMaxH = Math.max(rowMaxH, sectionHeights.get(secId)!);
+      rowW += sectionWidths.get(secId)!;
+      rowH = Math.max(rowH, sectionHeights.get(secId)!);
     }
+    rowW += (rowSections.length - 1) * SECTION_COL_GAP;
+    maxRowW = Math.max(maxRowW, rowW);
+    rowInfos.push({ sections: rowSections, rowW, rowH });
+  }
 
-    // Place sections left to right
-    let colX = PAD;
+  // Step 3: Place sections — center each row within the widest row width
+  const CANVAS_MARGIN = 300;
+  const canvasContentW = maxRowW;
+  curY = PAD;
+
+  for (const { sections: rowSections, rowW, rowH } of rowInfos) {
+    // Center this row within the max row width
+    let colX = PAD + (canvasContentW - rowW) / 2;
+
     for (const secId of rowSections) {
       const secCards = sectionMap.get(secId)!;
       const secW = sectionWidths.get(secId)!;
-
-      // Bin-pack cards within this section column
       binPackCards(secCards, secW, colX, curY + SECTION_LABEL_H, CARD_GAP);
-
       colX += secW + SECTION_COL_GAP;
-      totalW = Math.max(totalW, colX);
     }
 
-    curY += rowMaxH + SECTION_ROW_GAP;
+    curY += rowH + SECTION_ROW_GAP;
   }
 
-  return { width: totalW + PAD, height: curY + PAD };
+  // Add margins and compute canvas size
+  const contentW = canvasContentW + PAD * 2;
+  const contentH = curY + PAD;
+  const canvasW = contentW + CANVAS_MARGIN * 2;
+  const canvasH = contentH + CANVAS_MARGIN * 2;
+
+  // Shift all cards by margin offset
+  for (const card of cards) {
+    card.x += CANVAS_MARGIN;
+    card.y += CANVAS_MARGIN;
+  }
+
+  return { width: canvasW, height: canvasH };
 }
 
 export function renderBoardToHtml(board: Board, options: RenderOptions = {}): string {
@@ -316,29 +337,40 @@ export function renderBoardToHtml(board: Board, options: RenderOptions = {}): st
     }
   }
 
+  // Resize handles HTML (8 points: 4 corners + 4 midpoints)
+  const resizeHandles = '<div class="resize-handle rh-tl" data-rh="tl"></div><div class="resize-handle rh-tr" data-rh="tr"></div><div class="resize-handle rh-bl" data-rh="bl"></div><div class="resize-handle rh-br" data-rh="br"></div><div class="resize-handle rh-tm" data-rh="tm"></div><div class="resize-handle rh-bm" data-rh="bm"></div><div class="resize-handle rh-ml" data-rh="ml"></div><div class="resize-handle rh-mr" data-rh="mr"></div>';
+
   for (const [, b] of sectionBounds) {
-    sectionLabels.push(`<div class="section-label" style="left:${b.x - 10}px;top:${b.y - 5}px;width:${b.maxX - b.x + 20}px;height:${b.maxY - b.y + 15}px"><span class="label-text">${esc(b.title)}</span><div class="resize-handle"></div></div>`);
+    sectionLabels.push(`<div class="section-label" style="left:${b.x - 10}px;top:${b.y - 5}px;width:${b.maxX - b.x + 20}px;height:${b.maxY - b.y + 15}px"><span class="label-text">${esc(b.title)}</span>${resizeHandles}</div>`);
   }
 
   // Build card HTML — notes and text_blocks get auto height (no fixed height in CSS)
   const autoHeightTypes = new Set(['note', 'text_block']);
   const cardHtmls = cards.map(card => {
     const heightStyle = autoHeightTypes.has(card.type) ? '' : `height:${card.h}px;`;
-    return `<div class="bloo-card" data-card-id="${esc(card.id)}" data-type="${esc(card.type)}" style="left:${card.x}px;top:${card.y}px;width:${card.w}px;${heightStyle}">${card.html}<div class="resize-handle"></div></div>`;
+    return `<div class="bloo-card" data-card-id="${esc(card.id)}" data-type="${esc(card.type)}" style="left:${card.x}px;top:${card.y}px;width:${card.w}px;${heightStyle}">${card.html}${resizeHandles}</div>`;
   });
 
-  // Set canvas size
+  // Set canvas content
   const canvasHtml = sectionLabels.join('\n') + '\n' + cardHtmls.join('\n');
 
-  // Tags
-  const tagsHtml = board.tags.map(t => `<span class="board-tag">${esc(t)}</span>`).join('');
+  // Tags removed — not shown in header
+
+  // Split board name into title + subtitle (split on " — " or " - ")
+  const nameParts = board.name.split(/\s[—–-]\s/);
+  const mainTitle = nameParts[0].trim();
+  const subtitle = nameParts.length > 1 ? nameParts.slice(1).join(' — ').trim() : '';
 
   // Compose
   let html = BOARD_SHELL_HTML;
   html = html.replaceAll('{{BOARD_TITLE}}', esc(board.name));
+  html = html.replace('{{BOARD_MAIN_TITLE}}', esc(mainTitle));
+  html = html.replace('{{BOARD_SUBTITLE}}', esc(subtitle));
   html = html.replace('{{BOARD_VERSION}}', String(board.version));
-  html = html.replace('{{BOARD_TAGS_HTML}}', tagsHtml);
+  html = html.replace('{{BOARD_TAGS_HTML}}', '');
   html = html.replace('{{BOARD_CSS}}', BOARD_CSS);
+  html = html.replace('{{CANVAS_W}}', String(Math.round(canvasSize.width)));
+  html = html.replace('{{CANVAS_H}}', String(Math.round(canvasSize.height)));
   html = html.replace('{{CARDS_HTML}}', canvasHtml);
   html = html.replace('{{BOARD_DATA}}', JSON.stringify(board));
   html = html.replace('{{BOARD_INTERACTIVITY_JS}}', BOARD_JS);

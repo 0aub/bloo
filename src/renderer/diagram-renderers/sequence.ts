@@ -41,7 +41,7 @@ const NOTE_W = 120;
 const NOTE_H = 28;
 
 const COL_BG = 'hsl(160 10% 10%)';
-const COL_CARD_BG = 'hsl(160 10% 10% / 0.8)';
+const COL_CARD_BG = 'hsl(160 10% 10%)';
 const COL_TEXT = 'hsl(0 0% 95%)';
 const COL_MUTED = 'hsl(155 5% 55%)';
 const COL_BORDER = 'hsl(160 8% 18%)';

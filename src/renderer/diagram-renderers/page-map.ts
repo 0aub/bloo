@@ -10,8 +10,8 @@ const PAGE_WIDTH = 180;
 const PAGE_HEIGHT = 100;
 const TITLE_BAR_H = 28;
 const COLS = 4;
-const H_GAP = 80;
-const V_GAP = 90;
+const H_GAP = 100;
+const V_GAP = 100;
 
 const pageTypeColors: Record<string, { fill: string; titleBg: string; border: string }> = {
   page: { fill: 'hsl(200 40% 12%)', titleBg: 'hsl(200 50% 18%)', border: 'hsl(200 50% 40%)' },
@@ -57,7 +57,7 @@ export function render(element: Element): string {
 
   // Background
   parts.push(roundedRect(0, 0, size.width, size.height, 8, {
-    fill: 'hsl(160 15% 7%)',
+    fill: 'hsl(160 10% 10%)',
     stroke: 'hsl(160 8% 18%)',
     'stroke-width': 1.5,
   }));

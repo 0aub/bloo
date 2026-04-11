@@ -53,7 +53,7 @@ export function render(element: Element): string {
 
   // Background
   parts.push(roundedRect(0, 0, size.width, size.height, 8, {
-    fill: 'hsl(160 15% 7%)',
+    fill: 'hsl(160 10% 10%)',
     stroke: 'hsl(160 8% 18%)',
     'stroke-width': 1.5,
   }));
@@ -128,7 +128,7 @@ export function render(element: Element): string {
 
     // Stage card
     parts.push(roundedRect(stageX, sY, SW, sH, 6, {
-      fill: 'hsl(160 10% 10% / 0.8)',
+      fill: 'hsl(160 10% 10%)',
       stroke: 'hsl(160 8% 18%)',
       'stroke-width': 1,
     }));
@@ -163,7 +163,7 @@ export function render(element: Element): string {
     let stepY = sY + STAGE_PAD_TOP;
     for (const step of stage.steps) {
       parts.push(roundedRect(stageX + STAGE_PAD_X, stepY, SW - STAGE_PAD_X * 2, STEP_HEIGHT, 4, {
-        fill: 'hsl(160 15% 7%)',
+        fill: 'hsl(160 10% 10%)',
         stroke: 'hsl(160 8% 18%)',
         'stroke-width': 0.6,
       }));

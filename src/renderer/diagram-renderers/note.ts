@@ -53,7 +53,7 @@ export function render(element: Element): string {
     contentY,
     contentW,
     contentH,
-    `<div style="color:${'hsl(0 0% 95%)'};font-size:12px;font-family:${FONT_FAMILY};line-height:1.5;word-wrap:break-word;overflow:hidden">${escapeHtml(data.content)}</div>`
+    `<div style="color:hsl(0 0% 95%);font-size:12px;font-family:${FONT_FAMILY};line-height:1.5;word-wrap:break-word;overflow:hidden">${escapeHtml(data.content)}</div>`
   ));
 
   // Priority indicator in top-right corner

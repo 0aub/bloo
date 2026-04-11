@@ -34,19 +34,19 @@ const TABLE_MIN_W = 220;
 const HEADER_H = 28;
 const ROW_H = 24;
 const TABLE_PAD = 16;
-const GRID_GAP_X = 60;
-const GRID_GAP_Y = 60;
-const CANVAS_PAD = 20;
+const GRID_GAP_X = 80;
+const GRID_GAP_Y = 80;
+const CANVAS_PAD = 30;
 const CORNER_R = 6;
 
 const COL_BG = 'hsl(160 10% 10%)';
-const COL_CARD_BG = 'hsl(160 10% 10% / 0.8)';
+const COL_CARD_BG = 'hsl(160 10% 10%)';
 const COL_TEXT = 'hsl(0 0% 95%)';
 const COL_MUTED = 'hsl(155 5% 55%)';
 const COL_BORDER = 'hsl(160 8% 18%)';
 const COL_ACCENT = 'hsl(152 65% 55%)';
 const COL_CONN = 'hsl(155 5% 35%)';
-const COL_HEADER_BG = 'hsl(160 10% 13%)';
+const COL_HEADER_BG = 'hsl(160 8% 13%)';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -233,10 +233,7 @@ function renderRelationship(
   const to = layoutMap.get(rel.to_table);
   if (!from || !to) return '';
 
-  // Connect from right edge of `from` to left edge of `to`
-  const fromX = from.x + from.w;
-  const toX = to.x;
-  // Find the y of the column row
+  // Find y position at the column row
   const fromColIdx = from.table.columns.findIndex((c) => c.name === rel.from_column);
   const toColIdx = to.table.columns.findIndex((c) => c.name === rel.to_column);
   const fromY =
@@ -244,10 +241,38 @@ function renderRelationship(
   const toY =
     to.y + HEADER_H + (toColIdx >= 0 ? toColIdx : 0) * ROW_H + ROW_H / 2 + 2;
 
+  // Smart connection points: pick closest edges based on relative position
+  const fromCX = from.x + from.w / 2;
+  const toCX = to.x + to.w / 2;
+  const fromCY = from.y + from.h / 2;
+  const toCY = to.y + to.h / 2;
+
+  let fromX: number, toX: number;
+  if (Math.abs(fromCX - toCX) > Math.abs(fromCY - toCY)) {
+    // Tables are more horizontal than vertical — connect left/right edges
+    if (fromCX < toCX) {
+      fromX = from.x + from.w; // right edge
+      toX = to.x;              // left edge
+    } else {
+      fromX = from.x;          // left edge
+      toX = to.x + to.w;       // right edge
+    }
+  } else {
+    // Tables are more vertical — connect top/bottom edges via side
+    if (fromCY < toCY) {
+      fromX = from.x + from.w; // right edge going down
+      toX = to.x + to.w;       // right edge of target
+    } else {
+      fromX = from.x;          // left edge going up
+      toX = to.x;              // left edge of target
+    }
+  }
+
   const parts: string[] = [];
 
-  // Connection line
-  const pathD = curvedPath(fromX + 12, fromY, toX - 12, toY);
+  // Connection line with offset to avoid overlapping table edges
+  const offsetX = fromX > toX ? -14 : 14;
+  const pathD = curvedPath(fromX + offsetX, fromY, toX - offsetX, toY);
   parts.push(
     path(pathD, {
       fill: 'none',
@@ -256,17 +281,18 @@ function renderRelationship(
     }),
   );
 
-  // Crow's foot notation
+  // Crow's foot notation — direction based on which edge we're connecting from
+  const fromSide = fromX >= from.x + from.w / 2 ? 'right' : 'left';
+  const toSide = toX >= to.x + to.w / 2 ? 'right' : 'left';
   if (rel.type === 'one_to_one') {
-    parts.push(crowsFoot(fromX, fromY, 'right', 'one'));
-    parts.push(crowsFoot(toX, toY, 'left', 'one'));
+    parts.push(crowsFoot(fromX, fromY, fromSide as any, 'one'));
+    parts.push(crowsFoot(toX, toY, toSide as any, 'one'));
   } else if (rel.type === 'one_to_many') {
-    parts.push(crowsFoot(fromX, fromY, 'right', 'one'));
-    parts.push(crowsFoot(toX, toY, 'left', 'many'));
+    parts.push(crowsFoot(fromX, fromY, fromSide as any, 'one'));
+    parts.push(crowsFoot(toX, toY, toSide as any, 'many'));
   } else {
-    // many_to_many
-    parts.push(crowsFoot(fromX, fromY, 'right', 'many'));
-    parts.push(crowsFoot(toX, toY, 'left', 'many'));
+    parts.push(crowsFoot(fromX, fromY, fromSide as any, 'many'));
+    parts.push(crowsFoot(toX, toY, toSide as any, 'many'));
   }
 
   // Label

@@ -17,53 +17,102 @@ export const BOARD_JS = `
   };
 
   // --- Zoom ---
-  function applyZoom() {
-    canvas.style.transform = 'scale(' + scale + ')';
+  function centerCanvas() {
+    // If scaled canvas is smaller than viewport, center with translate
+    var vw = wrapper.clientWidth;
+    var vh = wrapper.clientHeight;
+    var scaledW = canvas.scrollWidth * scale;
+    var scaledH = canvas.scrollHeight * scale;
+    var padX = scaledW < vw ? (vw - scaledW) / 2 / scale : 0;
+    var padY = scaledH < vh ? (vh - scaledH) / 2 / scale : 0;
+    if (padX > 0 || padY > 0) {
+      canvas.style.transform = 'scale(' + scale + ') translate(' + padX + 'px,' + padY + 'px)';
+    } else {
+      canvas.style.transform = 'scale(' + scale + ')';
+    }
+    canvas.style.transformOrigin = '0 0';
     document.getElementById('zoom-display').textContent = Math.round(scale * 100) + '%';
   }
 
-  window.zoomIn = function() { scale = Math.min(scale * 1.2, 3); applyZoom(); };
-  window.zoomOut = function() { scale = Math.max(scale / 1.2, 0.2); applyZoom(); };
+  function zoomTo(newScale) {
+    var vw = wrapper.clientWidth;
+    var vh = wrapper.clientHeight;
+    // Get current center point in canvas coordinates
+    var oldPadX = canvas.scrollWidth * scale < vw ? (vw - canvas.scrollWidth * scale) / 2 : 0;
+    var oldPadY = canvas.scrollHeight * scale < vh ? (vh - canvas.scrollHeight * scale) / 2 : 0;
+    var centerX = (wrapper.scrollLeft + vw / 2 - oldPadX) / scale;
+    var centerY = (wrapper.scrollTop + vh / 2 - oldPadY) / scale;
+    scale = newScale;
+    centerCanvas();
+    // Scroll to keep the same center point
+    var newPadX = canvas.scrollWidth * scale < vw ? (vw - canvas.scrollWidth * scale) / 2 : 0;
+    var newPadY = canvas.scrollHeight * scale < vh ? (vh - canvas.scrollHeight * scale) / 2 : 0;
+    wrapper.scrollLeft = centerX * scale + newPadX - vw / 2;
+    wrapper.scrollTop = centerY * scale + newPadY - vh / 2;
+  }
+  window.zoomIn = function() { zoomTo(Math.min(scale * 1.2, 3)); };
+  window.zoomOut = function() { zoomTo(Math.max(scale / 1.2, 0.2)); };
 
-  // Mouse wheel zoom
+  // Mouse wheel zoom — zooms toward cursor position
   wrapper.addEventListener('wheel', function(e) {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       var delta = e.deltaY > 0 ? 0.9 : 1.1;
-      scale = Math.max(0.2, Math.min(3, scale * delta));
-      applyZoom();
+      zoomTo(Math.max(0.2, Math.min(3, scale * delta)));
     }
   }, { passive: false });
 
-  // Fit all
+  // Fit all — zoom to fit content and center it
   window.fitAll = function() {
-    var maxX = 0, maxY = 0;
+    var minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
     cards.forEach(function(c) {
-      var r = c.offsetLeft + c.offsetWidth;
-      var b = c.offsetTop + c.offsetHeight;
+      var l = c.offsetLeft;
+      var t = c.offsetTop;
+      var r = l + c.offsetWidth;
+      var b = t + c.offsetHeight;
+      if (l < minX) minX = l;
+      if (t < minY) minY = t;
       if (r > maxX) maxX = r;
       if (b > maxY) maxY = b;
     });
     if (maxX === 0 || maxY === 0) return;
-    var sw = wrapper.clientWidth - 40;
-    var sh = wrapper.clientHeight - 40;
-    scale = Math.min(sw / maxX, sh / maxY, 1);
-    applyZoom();
-    wrapper.scrollLeft = 0;
-    wrapper.scrollTop = 0;
+    var contentW = maxX - minX;
+    var contentH = maxY - minY;
+    var contentCX = (minX + maxX) / 2;
+    var contentCY = (minY + maxY) / 2;
+    var vw = wrapper.clientWidth;
+    var vh = wrapper.clientHeight;
+    scale = Math.min((vw - 40) / contentW, (vh - 40) / contentH, 1);
+    centerCanvas();
+    // Scroll to center the content
+    var padX = canvas.scrollWidth * scale < vw ? (vw - canvas.scrollWidth * scale) / 2 : 0;
+    var padY = canvas.scrollHeight * scale < vh ? (vh - canvas.scrollHeight * scale) / 2 : 0;
+    wrapper.scrollLeft = contentCX * scale + padX - vw / 2;
+    wrapper.scrollTop = contentCY * scale + padY - vh / 2;
   };
 
-  // --- Drag cards ---
+  // --- Edit / View mode ---
+  var editMode = false;
+  var editIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>';
+  var saveIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>';
+  window.toggleEditMode = function() {
+    editMode = !editMode;
+    document.body.classList.toggle('edit-mode', editMode);
+    var btn = document.getElementById('btn-edit');
+    btn.classList.toggle('edit-active', editMode);
+    btn.innerHTML = editMode ? saveIcon : editIcon;
+    btn.title = editMode ? 'Exit edit mode' : 'Edit mode';
+  };
+
+  // --- Drag cards (edit mode only) ---
   var dragCard = null;
   var dragOffX = 0, dragOffY = 0;
 
   document.addEventListener('mousedown', function(e) {
-    // Drag cards OR section labels
+    if (!editMode) return;
     var card = e.target.closest('.bloo-card') || e.target.closest('.section-label');
     if (!card) return;
-    // Don't drag if clicking resize handle
     if (e.target.closest('.resize-handle')) return;
-    // Don't drag if clicking inside SVG interactable
     if (e.target.closest('[data-node-id]')) return;
 
     e.preventDefault();
@@ -77,7 +126,6 @@ export const BOARD_JS = `
   document.addEventListener('mousemove', function(e) {
     if (!dragCard) return;
     e.preventDefault();
-    // Convert mouse position to canvas coordinates
     var wrapRect = wrapper.getBoundingClientRect();
     var x = (e.clientX - wrapRect.left + wrapper.scrollLeft) / scale - dragOffX / scale;
     var y = (e.clientY - wrapRect.top + wrapper.scrollTop) / scale - dragOffY / scale;
@@ -92,33 +140,55 @@ export const BOARD_JS = `
     }
   });
 
-  // --- Resize cards ---
-  var resizeCard = null;
-  var resizeStartW, resizeStartH, resizeStartX, resizeStartY;
+  // --- 8-point resize (edit mode only) ---
+  var resizeEl = null;
+  var resizeHandle = '';
+  var resizeStartW, resizeStartH, resizeStartX, resizeStartY, resizeStartL, resizeStartT;
 
   document.addEventListener('mousedown', function(e) {
+    if (!editMode) return;
     var handle = e.target.closest('.resize-handle');
     if (!handle) return;
     e.preventDefault();
     e.stopPropagation();
-    resizeCard = handle.closest('.bloo-card') || handle.closest('.section-label');
-    resizeStartW = resizeCard.offsetWidth;
-    resizeStartH = resizeCard.offsetHeight;
+    resizeEl = handle.closest('.bloo-card') || handle.closest('.section-label');
+    resizeHandle = handle.getAttribute('data-rh') || 'br';
+    resizeStartW = resizeEl.offsetWidth;
+    resizeStartH = resizeEl.offsetHeight;
+    resizeStartL = parseFloat(resizeEl.style.left) || 0;
+    resizeStartT = parseFloat(resizeEl.style.top) || 0;
     resizeStartX = e.clientX;
     resizeStartY = e.clientY;
   }, true);
 
   document.addEventListener('mousemove', function(e) {
-    if (!resizeCard) return;
+    if (!resizeEl) return;
     e.preventDefault();
-    var dw = (e.clientX - resizeStartX) / scale;
-    var dh = (e.clientY - resizeStartY) / scale;
-    resizeCard.style.width = Math.max(200, resizeStartW + dw) + 'px';
-    resizeCard.style.height = Math.max(100, resizeStartH + dh) + 'px';
+    var dx = (e.clientX - resizeStartX) / scale;
+    var dy = (e.clientY - resizeStartY) / scale;
+    var h = resizeHandle;
+
+    // Width changes
+    if (h === 'tr' || h === 'br' || h === 'mr') {
+      resizeEl.style.width = Math.max(150, resizeStartW + dx) + 'px';
+    } else if (h === 'tl' || h === 'bl' || h === 'ml') {
+      var newW = Math.max(150, resizeStartW - dx);
+      resizeEl.style.width = newW + 'px';
+      resizeEl.style.left = (resizeStartL + resizeStartW - newW) + 'px';
+    }
+
+    // Height changes
+    if (h === 'bl' || h === 'br' || h === 'bm') {
+      resizeEl.style.height = Math.max(80, resizeStartH + dy) + 'px';
+    } else if (h === 'tl' || h === 'tr' || h === 'tm') {
+      var newH = Math.max(80, resizeStartH - dy);
+      resizeEl.style.height = newH + 'px';
+      resizeEl.style.top = (resizeStartT + resizeStartH - newH) + 'px';
+    }
   });
 
   document.addEventListener('mouseup', function() {
-    resizeCard = null;
+    resizeEl = null;
   });
 
   // --- Pan canvas (middle-click or background drag) ---
@@ -149,35 +219,6 @@ export const BOARD_JS = `
   });
 
   // --- Save layout ---
-  window.saveLayout = function() {
-    var layout = { board_id: boardData.id, cards: {}, sections: {} };
-    cards.forEach(function(c) {
-      var id = c.getAttribute('data-card-id');
-      if (id) {
-        layout.cards[id] = {
-          x: parseInt(c.style.left) || 0,
-          y: parseInt(c.style.top) || 0,
-          w: c.offsetWidth,
-          h: c.offsetHeight
-        };
-      }
-    });
-    document.querySelectorAll('.section-label').forEach(function(s, i) {
-      layout.sections['sec_' + i] = {
-        x: parseInt(s.style.left) || 0,
-        y: parseInt(s.style.top) || 0,
-        w: s.offsetWidth,
-        h: s.offsetHeight
-      };
-    });
-    var blob = new Blob([JSON.stringify(layout, null, 2)], { type: 'application/json' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'bloo-layout.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
   // --- SVG interactivity (hover/click highlights) ---
   document.querySelectorAll('.card-body svg').forEach(function(svg) {
     var nodes = svg.querySelectorAll('[data-node-id]');
@@ -266,7 +307,10 @@ export const BOARD_JS = `
 
   function esc(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
 
-  // --- Initial fit ---
-  setTimeout(fitAll, 200);
+  // --- Initial fit (hidden until ready to prevent 100% flash) ---
+  requestAnimationFrame(function() {
+    fitAll();
+    wrapper.classList.add('ready');
+  });
 })();
 `;

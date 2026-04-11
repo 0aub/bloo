@@ -25,7 +25,7 @@ export function render(element: Element): string {
 
   // Background
   parts.push(roundedRect(0, 0, size.width, size.height, 8, {
-    fill: 'hsl(160 15% 7%)',
+    fill: 'hsl(160 10% 10%)',
     stroke: 'hsl(160 8% 18%)',
     'stroke-width': 1.5,
   }));
@@ -57,7 +57,7 @@ export function render(element: Element): string {
 
     // Group card
     parts.push(roundedRect(PAD, cursorY, GROUP_WIDTH, groupH, 6, {
-      fill: 'hsl(160 10% 10% / 0.8)',
+      fill: 'hsl(160 10% 10%)',
       stroke: 'hsl(160 8% 18%)',
       'stroke-width': 1,
     }));

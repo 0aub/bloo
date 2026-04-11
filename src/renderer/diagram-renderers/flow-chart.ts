@@ -18,10 +18,10 @@ const MAX_NODE_W = 180;
 const NODE_H = 30;
 const NODE_H_MULTI = 42;
 const NODE_PAD_X = 16;
-const NODE_GAP = 36;
-const ROW_GAP = 64;
+const NODE_GAP = 50;
+const ROW_GAP = 72;
 const PAD = 24;
-const MAX_ROW_W = 550;
+const MAX_ROW_W = 800;
 
 const COL_BG = 'hsl(160 10% 10%)';
 const COL_TEXT = 'hsl(0 0% 95%)';
@@ -78,11 +78,12 @@ function measureNode(node: FlowNode): { w: number; h: number; lines: string[] } 
   }
 
   const maxLineW = Math.max(...lines.map(l => l.length * CHAR_W));
-  const w = Math.max(MIN_NODE_W, Math.min(MAX_NODE_W, maxLineW + NODE_PAD_X * 2));
+  let w = Math.max(MIN_NODE_W, Math.min(MAX_NODE_W, maxLineW + NODE_PAD_X * 2));
   let h = lines.length > 1 ? lines.length * 14 + 12 : NODE_H;
-  // Decision/diamond nodes need height = width (diamond is square rotated 45°)
+  // Decision/diamond nodes: diamond is square rotated 45°, extends equally in all directions
   if (node.type === 'decision') {
     const diamondSize = Math.max(w, h) + 10;
+    w = diamondSize;
     h = diamondSize;
   }
   return { w, h, lines };

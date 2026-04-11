@@ -1,0 +1,9 @@
+services:
+  bloo:
+    build: .
+    stdin_open: true
+    volumes:
+      - ./test-project:/project
+    environment:
+      - BLOO_PROJECT_ROOT=/project
+      - BLOO_STORAGE_ROOT=/project/.bloo

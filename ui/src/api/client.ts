@@ -88,6 +88,15 @@ export const api = {
   getBoard: (id: string) => request<{ success: boolean; data: { board: Board; stats: any } }>(`/api/boards/${id}`),
   getSvg: (boardId: string, elementId: string) =>
     fetch(`/api/boards/${boardId}/render/${elementId}`).then(r => r.text()),
+  // Layout
+  saveLayout: (boardId: string, layouts: Array<{ element_id: string; x: number; y: number; w: number; h: number }>) =>
+    request<{ success: boolean }>(`/api/boards/${boardId}/layout`, {
+      method: 'PUT', body: JSON.stringify({ layouts }),
+    }),
+  loadLayout: (boardId: string) =>
+    request<{ success: boolean; data: { layouts: Array<{ element_id: string; x: number; y: number; w: number; h: number }> } }>(`/api/boards/${boardId}/layout`),
+
+  // Export
   exportBoard: (id: string, format: string) =>
     fetch(`/api/boards/${id}/export?format=${format}`).then(r => r.blob()),
   searchBoard: (id: string, query: string) =>

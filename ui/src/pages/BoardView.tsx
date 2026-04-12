@@ -183,13 +183,32 @@ export default function BoardView({ boardId, onBack }: Props) {
       .finally(() => setLoading(false));
   }, [boardId]);
 
-  // Compute layout when board loads
+  // Compute layout when board loads, then apply saved positions
   useEffect(() => {
     if (!board) return;
     const layout = computeLayout(board);
-    setLayoutItems(layout.items);
-    setSectionLabels(layout.sectionLabels);
-    setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
+
+    // Try to load saved layout and override positions
+    api.loadLayout(boardId).then(res => {
+      const saved = res.data.layouts;
+      if (saved && saved.length > 0) {
+        const posMap = new Map(saved.map(l => [l.element_id, l]));
+        for (const item of layout.items) {
+          const s = posMap.get(item.element.id);
+          if (s) {
+            item.pos = { x: s.x, y: s.y, w: s.w, h: s.h };
+          }
+        }
+      }
+      setLayoutItems(layout.items);
+      setSectionLabels(layout.sectionLabels);
+      setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
+    }).catch(() => {
+      // No saved layout, use computed
+      setLayoutItems(layout.items);
+      setSectionLabels(layout.sectionLabels);
+      setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
+    });
 
     // Fit all on initial load, then fade in
     requestAnimationFrame(() => {
@@ -281,6 +300,18 @@ export default function BoardView({ boardId, onBack }: Props) {
     }
   }, [boardId, board]);
 
+  // Save layout
+  const handleSaveLayout = useCallback(async () => {
+    const layouts = layoutItems.map(item => ({
+      element_id: item.element.id,
+      x: item.pos.x,
+      y: item.pos.y,
+      w: item.pos.w,
+      h: item.pos.h,
+    }));
+    await api.saveLayout(boardId, layouts);
+  }, [boardId, layoutItems]);
+
   // Search result selection
   const handleSearchSelect = useCallback((elementId: string) => {
     scrollToRef.current?.(elementId);
@@ -329,6 +360,7 @@ export default function BoardView({ boardId, onBack }: Props) {
         onSearch={() => setSearchOpen(true)}
         onToggleTheme={toggleTheme}
         onToggleEdit={() => setEditMode(m => !m)}
+        onSaveLayout={handleSaveLayout}
         onExportHtml={() => handleExport('html')}
       />
 

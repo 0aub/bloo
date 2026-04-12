@@ -12,6 +12,7 @@ interface Props {
   onSearch: () => void;
   onToggleTheme: () => void;
   onToggleEdit: () => void;
+  onSaveLayout: () => void;
   onExportHtml: () => void;
 }
 
@@ -108,6 +109,13 @@ const Icons = {
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   ),
+  Save: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <polyline points="17 21 17 13 7 13 7 21" />
+      <polyline points="7 3 7 8 15 8" />
+    </svg>
+  ),
   Download: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -144,6 +152,7 @@ export default function Toolbar({
   onSearch,
   onToggleTheme,
   onToggleEdit,
+  onSaveLayout,
   onExportHtml,
 }: Props) {
   return (
@@ -205,6 +214,11 @@ export default function Toolbar({
         <IconButton onClick={onToggleEdit} title="Edit mode (E)" active={editMode}>
           {Icons.Edit}
         </IconButton>
+        {editMode && (
+          <IconButton onClick={onSaveLayout} title="Save layout">
+            {Icons.Save}
+          </IconButton>
+        )}
 
         <Separator />
 

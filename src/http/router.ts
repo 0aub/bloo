@@ -172,6 +172,25 @@ export function createRouter(boardStore: BoardStore, historyStore: HistoryStore)
     }
   });
 
+  // --- Card Layout ---
+  router.get('/api/boards/:id/layout', async (req, res) => {
+    try {
+      const layouts = boardStore.loadLayout(req.params.id);
+      res.json({ success: true, data: { layouts } });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  router.put('/api/boards/:id/layout', async (req, res) => {
+    try {
+      boardStore.saveLayout(req.params.id, req.body.layouts || []);
+      res.json({ success: true, data: { saved: true } });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
   // --- Export ---
   router.get('/api/boards/:id/export', async (req, res) => {
     try {

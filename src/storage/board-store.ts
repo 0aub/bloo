@@ -979,4 +979,29 @@ export class BoardStore {
     }
     throw new Error(`Element not found: ${elementId}`);
   }
+
+  // --- Card Layout Persistence ---
+
+  saveLayout(boardId: string, layouts: Array<{ element_id: string; x: number; y: number; w: number; h: number }>): void {
+    const db = getDb();
+    const upsert = db.prepare(`
+      INSERT OR REPLACE INTO card_layouts (board_id, element_id, x, y, w, h)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    db.transaction(() => {
+      // Clear existing layouts for this board
+      db.prepare('DELETE FROM card_layouts WHERE board_id = ?').run(boardId);
+      for (const l of layouts) {
+        upsert.run(boardId, l.element_id, l.x, l.y, l.w, l.h);
+      }
+    })();
+  }
+
+  loadLayout(boardId: string): Array<{ element_id: string; x: number; y: number; w: number; h: number }> {
+    const db = getDb();
+    const rows = db.prepare(
+      'SELECT element_id, x, y, w, h FROM card_layouts WHERE board_id = ?'
+    ).all(boardId) as Array<{ element_id: string; x: number; y: number; w: number; h: number }>;
+    return rows;
+  }
 }

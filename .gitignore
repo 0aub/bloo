@@ -3,3 +3,5 @@ dist/
 *.tmp
 .bloo/
 *.tsbuildinfo
+ui/node_modules/
+ui/dist/

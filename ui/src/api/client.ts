@@ -62,8 +62,29 @@ export interface Element {
   updated_at: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  path: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const api = {
-  listBoards: () => request<{ success: boolean; data: { boards: BoardIndex[] } }>('/api/boards'),
+  // Projects
+  listProjects: () => request<{ success: boolean; data: { projects: Project[] } }>('/api/projects'),
+  createProject: (data: { name: string; path: string }) =>
+    request<{ success: boolean; data: { project: Project } }>('/api/projects', {
+      method: 'POST', body: JSON.stringify(data),
+    }),
+  getProject: (id: string) =>
+    request<{ success: boolean; data: { project: Project; boards: BoardIndex[] } }>(`/api/projects/${id}`),
+  deleteProject: (id: string) =>
+    request<{ success: boolean }>(`/api/projects/${id}`, { method: 'DELETE' }),
+
+  // Boards
+  listBoards: (projectId?: string) =>
+    request<{ success: boolean; data: { boards: BoardIndex[] } }>(`/api/boards${projectId ? `?project_id=${projectId}` : ''}`),
   getBoard: (id: string) => request<{ success: boolean; data: { board: Board; stats: any } }>(`/api/boards/${id}`),
   getSvg: (boardId: string, elementId: string) =>
     fetch(`/api/boards/${boardId}/render/${elementId}`).then(r => r.text()),

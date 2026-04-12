@@ -1,6 +1,7 @@
 # Stage 1: Build backend
 FROM node:22-alpine AS backend-builder
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 COPY package.json ./
 RUN npm install --package-lock-only && npm ci
 RUN mkdir -p assets && \

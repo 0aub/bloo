@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import BoardList from './pages/BoardList';
+import Dashboard from './pages/Dashboard';
 import BoardView from './pages/BoardView';
 
 export default function App() {
@@ -26,5 +26,5 @@ export default function App() {
   if (boardId) {
     return <BoardView boardId={boardId} onBack={() => navigate(null)} />;
   }
-  return <BoardList onSelect={(id) => navigate(id)} />;
+  return <Dashboard onSelectBoard={(id) => navigate(id)} />;
 }

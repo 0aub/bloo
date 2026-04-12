@@ -11,11 +11,50 @@ import type { ElementData } from '../models/elements.js';
 export function createRouter(boardStore: BoardStore, historyStore: HistoryStore): Router {
   const router = Router();
 
+  // --- Projects ---
+  router.get('/api/projects', async (req, res) => {
+    try {
+      const projects = boardStore.listProjects();
+      res.json({ success: true, data: { projects } });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  router.post('/api/projects', async (req, res) => {
+    try {
+      const project = boardStore.createProject(req.body);
+      res.json({ success: true, data: { project } });
+    } catch (e: any) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  });
+
+  router.get('/api/projects/:id', async (req, res) => {
+    try {
+      const project = boardStore.getProject(req.params.id);
+      const boards = await boardStore.listBoards(undefined, req.params.id);
+      res.json({ success: true, data: { project, boards } });
+    } catch (e: any) {
+      res.status(404).json({ success: false, error: e.message });
+    }
+  });
+
+  router.delete('/api/projects/:id', async (req, res) => {
+    try {
+      boardStore.deleteProject(req.params.id);
+      res.json({ success: true, data: { deleted: true } });
+    } catch (e: any) {
+      res.status(404).json({ success: false, error: e.message });
+    }
+  });
+
   // --- Boards ---
   router.get('/api/boards', async (req, res) => {
     try {
       const projectPath = req.query.project_path as string | undefined;
-      const boards = await boardStore.listBoards(projectPath);
+      const projectId = req.query.project_id as string | undefined;
+      const boards = await boardStore.listBoards(projectPath, projectId);
       res.json({ success: true, data: { boards } });
     } catch (e: any) {
       res.status(500).json({ success: false, error: e.message });

@@ -119,11 +119,11 @@ export default function Dashboard({ onSelectBoard }: Props) {
         }}
       >
         {/* Logo area */}
-        <div className="flex flex-col items-center py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <img src="/logo.png" alt="Bloo" style={{ width: sidebarCollapsed ? 28 : 36, height: sidebarCollapsed ? 28 : 36, transition: 'all 0.2s' }} />
+        <div className="flex flex-col items-center py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <img src="/logo.png" alt="Bloo" style={{ width: sidebarCollapsed ? 28 : 44, height: sidebarCollapsed ? 28 : 44, transition: 'all 0.2s' }} />
           {!sidebarCollapsed && (
-            <span style={{ fontSize: 13, fontWeight: 800, marginTop: 6, background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Bloo
+            <span style={{ fontSize: 18, fontWeight: 800, marginTop: 8, letterSpacing: 2, fontFamily: "'Almarai', sans-serif", background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              BLOO
             </span>
           )}
         </div>
@@ -134,7 +134,10 @@ export default function Dashboard({ onSelectBoard }: Props) {
             <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--fg-muted)' }}>Projects</span>
             <button
               onClick={() => setShowAddModal(true)}
-              style={{ background: 'hsl(155 50% 25%)', border: '1px solid hsl(152 40% 30%)', color: 'hsl(152 65% 65%)', borderRadius: 5, padding: '2px 8px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', cursor: 'pointer', padding: 0, fontSize: 16, lineHeight: 1, opacity: 0.6, transition: 'opacity 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--accent)'; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
+              title="Add project"
             >+</button>
           </div>
         )}
@@ -184,18 +187,21 @@ export default function Dashboard({ onSelectBoard }: Props) {
           </a>
         </div>
 
-        {/* Collapse toggle — small glass button on the edge */}
+        {/* Collapse toggle */}
         <button
           onClick={() => setSidebarCollapsed(c => !c)}
           style={{
-            position: 'absolute', top: '50%', right: -12, transform: 'translateY(-50%)',
-            width: 24, height: 24, borderRadius: 12,
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            position: 'absolute', top: '50%', right: -8, transform: 'translateY(-50%)',
+            width: 16, height: 32, borderRadius: '0 6px 6px 0',
+            background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderLeft: 'none',
+            backdropFilter: 'blur(8px)',
             color: 'var(--fg-muted)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 10, zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            fontSize: 9, zIndex: 50,
+            opacity: 0.6, transition: 'opacity 0.15s',
           }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
         >
           {sidebarCollapsed ? '›' : '‹'}
         </button>
@@ -221,10 +227,11 @@ export default function Dashboard({ onSelectBoard }: Props) {
           <div className="p-8">
             {boards.length === 0 ? (
               <div className="flex flex-col items-center py-20" style={{ color: 'var(--fg-muted)' }}>
-                <div style={{
-                  width: 72, height: 72, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'var(--bg-card)', border: '2px dashed var(--border)', marginBottom: 20, fontSize: 28
-                }}>📋</div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ opacity: 0.2, marginBottom: 20 }}>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="9" y1="3" x2="9" y2="21"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                </svg>
                 <p style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>No boards yet</p>
                 <p style={{ fontSize: 13, maxWidth: 440, textAlign: 'center', lineHeight: 1.7, marginBottom: 24 }}>
                   Add this to your Claude Code MCP settings, then ask Claude to document this project:
@@ -233,12 +240,26 @@ export default function Dashboard({ onSelectBoard }: Props) {
                 <div style={{
                   padding: '16px 20px', borderRadius: 10, width: 420, maxWidth: '90%',
                   background: 'var(--bg-card)', border: '1px solid var(--border)',
+                  position: 'relative',
                 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--fg-muted)', marginBottom: 10 }}>Claude Code MCP Config</div>
+                  <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--fg-muted)' }}>Claude Code MCP Config</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(JSON.stringify({ mcpServers: { bloo: { url: "http://localhost:3000/mcp/sse" } } }, null, 2));
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', cursor: 'pointer', padding: 2, opacity: 0.5, transition: 'opacity 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
+                      title="Copy to clipboard"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    </button>
+                  </div>
                   <pre style={{
                     fontSize: 11, fontFamily: 'monospace', color: 'var(--accent)',
                     background: 'var(--bg-elevated)', padding: 12, borderRadius: 6,
-                    overflow: 'auto', lineHeight: 1.5,
+                    overflow: 'auto', lineHeight: 1.5, margin: 0,
                   }}>{`{
   "mcpServers": {
     "bloo": {
@@ -315,7 +336,7 @@ export default function Dashboard({ onSelectBoard }: Props) {
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 5 }}>Select a project folder</label>
             <FolderBrowser onSelect={(selectedPath, folderName) => {
               setNewPath(selectedPath);
-              if (!newName) setNewName(folderName);
+              setNewName(folderName);
             }} />
           </div>
 

@@ -15,15 +15,15 @@
 }
 
 .light {
-  --bg: hsl(150 10% 97%);
+  --bg: hsl(210 15% 97%);
   --bg-card: hsl(0 0% 100%);
-  --bg-elevated: hsl(150 6% 94%);
-  --fg: hsl(160 20% 9%);
-  --fg-muted: hsl(155 8% 45%);
-  --primary: hsl(155 60% 28%);
-  --accent: hsl(152 55% 45%);
-  --border: hsl(150 8% 85%);
-  --border-hover: hsl(155 12% 78%);
+  --bg-elevated: hsl(210 10% 94%);
+  --fg: hsl(220 15% 12%);
+  --fg-muted: hsl(220 8% 50%);
+  --primary: hsl(220 60% 45%);
+  --accent: hsl(220 65% 50%);
+  --border: hsl(220 10% 88%);
+  --border-hover: hsl(220 15% 78%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

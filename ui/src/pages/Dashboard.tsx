@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, type Project, type BoardIndex } from '../api/client';
 import { useTheme } from '../hooks/useTheme';
+import FolderBrowser from '../components/FolderBrowser';
 
 interface Props {
   onSelectBoard: (boardId: string) => void;
@@ -229,7 +230,7 @@ export default function Dashboard({ onSelectBoard }: Props) {
           onClick={e => e.stopPropagation()}
           style={{
             background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 16, padding: 32, width: 420, maxWidth: '90vw',
+            borderRadius: 16, padding: 32, width: 520, maxWidth: '90vw',
             boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
           }}
         >
@@ -238,12 +239,29 @@ export default function Dashboard({ onSelectBoard }: Props) {
             <h3 style={{ fontSize: 18, fontWeight: 700 }}>Add Project</h3>
           </div>
 
+          {/* Folder Browser */}
           <div className="mb-4">
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Select Project Folder</label>
+            <FolderBrowser onSelect={(selectedPath, folderName) => {
+              setNewPath(selectedPath);
+              if (!newName) setNewName(folderName);
+            }} />
+          </div>
+
+          {/* Selected path display */}
+          {newPath && (
+            <div className="mb-4" style={{ padding: '8px 12px', borderRadius: 6, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 10, color: 'var(--fg-muted)', marginBottom: 2 }}>Selected</div>
+              <div style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--accent)' }}>{newPath}</div>
+            </div>
+          )}
+
+          {/* Project Name */}
+          <div className="mb-6">
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Project Name</label>
             <input
               value={newName} onChange={e => setNewName(e.target.value)}
               placeholder="My Project"
-              autoFocus
               style={{
                 width: '100%', padding: '10px 14px', borderRadius: 8,
                 background: 'var(--bg-elevated)', border: '1px solid var(--border)',
@@ -251,41 +269,25 @@ export default function Dashboard({ onSelectBoard }: Props) {
               }}
               onFocus={e => e.currentTarget.style.borderColor = 'var(--accent)'}
               onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
-            />
-          </div>
-
-          <div className="mb-6">
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Project Path</label>
-            <input
-              value={newPath} onChange={e => setNewPath(e.target.value)}
-              placeholder="/projects/my-project"
-              style={{
-                width: '100%', padding: '10px 14px', borderRadius: 8,
-                background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                color: 'var(--fg)', fontSize: 14, fontFamily: 'monospace', outline: 'none',
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-              onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
               onKeyDown={e => e.key === 'Enter' && addProject()}
             />
-            <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6 }}>
-              Path inside the Docker container (mounted via volumes)
-            </p>
           </div>
 
           <div className="flex gap-3">
             <button
               onClick={addProject}
+              disabled={!newPath || !newName}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                background: 'linear-gradient(135deg, hsl(155 65% 30%), hsl(152 65% 45%))',
-                color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                background: newPath && newName ? 'linear-gradient(135deg, hsl(155 65% 30%), hsl(152 65% 45%))' : 'var(--bg-elevated)',
+                color: newPath && newName ? 'white' : 'var(--fg-muted)',
+                fontSize: 13, fontWeight: 600, cursor: newPath && newName ? 'pointer' : 'not-allowed',
               }}
             >
               Add Project
             </button>
             <button
-              onClick={() => setShowAddModal(false)}
+              onClick={() => { setShowAddModal(false); setNewName(''); setNewPath(''); }}
               style={{
                 padding: '10px 20px', borderRadius: 8,
                 background: 'var(--bg-elevated)', border: '1px solid var(--border)',

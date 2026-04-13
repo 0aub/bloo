@@ -70,7 +70,21 @@ export interface Project {
   updated_at: string;
 }
 
+export interface FsEntry {
+  name: string;
+  type: 'directory' | 'file';
+  path: string;
+  hasChildren: boolean;
+  isProject: boolean;
+}
+
 export const api = {
+  // File system browsing
+  listDirectory: (dirPath?: string) =>
+    request<{ success: boolean; data: { path: string; parent: string | null; entries: FsEntry[] } }>(
+      `/api/fs/list${dirPath ? `?path=${encodeURIComponent(dirPath)}` : ''}`
+    ),
+
   // Projects
   listProjects: () => request<{ success: boolean; data: { projects: Project[] } }>('/api/projects'),
   createProject: (data: { name: string; path: string }) =>

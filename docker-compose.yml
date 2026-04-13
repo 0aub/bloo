@@ -5,10 +5,10 @@ services:
       - "3000:3000"
     volumes:
       - bloo-data:/app/data
-      - ${BLOO_PROJECTS_PATH:-./test-project}:/projects
+      - ${HOME:-/home}:${HOME:-/home}
     environment:
       - BLOO_DATA_DIR=/app/data
-      - BLOO_PROJECTS_ROOT=/projects
+      - BLOO_BROWSE_ROOT=${HOME:-/home}
       - BLOO_HTTP_PORT=3000
 
 volumes:

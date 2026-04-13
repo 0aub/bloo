@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { readdirSync, statSync, existsSync } from 'node:fs';
+import path from 'node:path';
 import type { BoardStore } from '../storage/board-store.js';
 import type { HistoryStore } from '../storage/history-store.js';
 import { getRenderer } from '../renderer/diagram-renderers/index.js';
@@ -8,8 +10,84 @@ import { getElementDataSchema } from '../utils/validators.js';
 import type { ElementType } from '../models/board.js';
 import type { ElementData } from '../models/elements.js';
 
+const PROJECT_MARKERS = ['.git', 'package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod', 'pom.xml', 'Makefile', 'CMakeLists.txt', 'requirements.txt', 'composer.json', 'Gemfile'];
+
 export function createRouter(boardStore: BoardStore, historyStore: HistoryStore): Router {
   const router = Router();
+
+  // --- File System Browsing ---
+  router.get('/api/fs/list', async (req, res) => {
+    try {
+      const browseRoot = process.env.BLOO_BROWSE_ROOT || '/home';
+      const requestedPath = (req.query.path as string) || browseRoot;
+
+      // Resolve and validate path
+      const resolved = path.resolve(requestedPath);
+      if (!existsSync(resolved)) {
+        res.status(404).json({ success: false, error: 'Path not found' });
+        return;
+      }
+
+      const stat = statSync(resolved);
+      if (!stat.isDirectory()) {
+        res.status(400).json({ success: false, error: 'Not a directory' });
+        return;
+      }
+
+      const entries: Array<{
+        name: string;
+        type: 'directory' | 'file';
+        path: string;
+        hasChildren: boolean;
+        isProject: boolean;
+      }> = [];
+
+      const items = readdirSync(resolved, { withFileTypes: true });
+      for (const item of items) {
+        // Skip hidden files/dirs (except .git for project detection)
+        if (item.name.startsWith('.') && item.name !== '.git') continue;
+        // Skip node_modules, dist, etc.
+        if (['node_modules', 'dist', '__pycache__', '.next', 'vendor', 'target'].includes(item.name)) continue;
+
+        if (item.isDirectory()) {
+          const fullPath = path.join(resolved, item.name);
+          let hasChildren = false;
+          let isProject = false;
+
+          try {
+            const children = readdirSync(fullPath, { withFileTypes: true });
+            hasChildren = children.some(c => c.isDirectory());
+            isProject = children.some(c => PROJECT_MARKERS.includes(c.name));
+          } catch { /* permission denied, skip */ }
+
+          entries.push({
+            name: item.name,
+            type: 'directory',
+            path: fullPath,
+            hasChildren,
+            isProject,
+          });
+        }
+      }
+
+      // Sort: projects first, then alphabetical
+      entries.sort((a, b) => {
+        if (a.isProject !== b.isProject) return a.isProject ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      res.json({
+        success: true,
+        data: {
+          path: resolved,
+          parent: path.dirname(resolved) !== resolved ? path.dirname(resolved) : null,
+          entries,
+        },
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
 
   // --- Projects ---
   router.get('/api/projects', async (req, res) => {

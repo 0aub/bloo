@@ -94,22 +94,7 @@ export default function Dashboard({ onSelectBoard }: Props) {
             + Add Your First Project
           </button>
 
-          {/* Feature highlights */}
-          <div className="flex gap-8 mt-16">
-            {[
-              { icon: '📊', label: '17 Diagram Types', desc: 'Architecture, DB, flows, sequences...' },
-              { icon: '🤖', label: 'Claude Code MCP', desc: 'AI analyzes, Bloo visualizes' },
-              { icon: '🎨', label: 'Interactive Canvas', desc: 'Drag, zoom, arrange, export' },
-            ].map(f => (
-              <div key={f.label} className="text-center" style={{ maxWidth: 160 }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>{f.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{f.label}</div>
-                <div style={{ fontSize: 11, color: 'var(--fg-muted)', lineHeight: 1.5 }}>{f.desc}</div>
-              </div>
-            ))}
-          </div>
-
-          <p style={{ color: 'var(--fg-muted)', fontSize: 11, marginTop: 40, opacity: 0.5 }}>
+          <p style={{ color: 'var(--fg-muted)', fontSize: 11, marginTop: 48, opacity: 0.4 }}>
             Open source • github.com/0aub/bloo
           </p>
         </div>

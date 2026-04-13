@@ -106,16 +106,17 @@ function TreeList({ nodes, depth, selectedPath, onToggle, onSelect }: {
       {nodes.map(node => (
         <div key={node.path}>
           <div
-            className="group flex items-center gap-1 px-2 py-1 cursor-pointer"
+            className="group flex items-center gap-1 px-2 py-1"
             style={{
               paddingLeft: 8 + depth * 16,
+              cursor: node.isProject ? 'pointer' : 'default',
               background: selectedPath === node.path ? 'var(--accent)' : 'transparent',
               color: selectedPath === node.path ? 'var(--bg)' : 'var(--fg)',
               borderRadius: 4,
               margin: '1px 4px',
               transition: 'background 0.1s',
             }}
-            onClick={() => onSelect(node)}
+            onClick={() => { if (node.isProject) onSelect(node); else onToggle(node); }}
             onDoubleClick={() => onToggle(node)}
           >
             {/* Chevron */}

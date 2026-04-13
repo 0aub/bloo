@@ -17,6 +17,7 @@ export function registerBoardTools(server: McpServer, boardStore: BoardStore, hi
     'Create a new documentation board for a project',
     {
       name: z.string().min(1).describe('Board display name'),
+      project_id: z.string().optional().describe('Project ID (if already registered)'),
       project_path: z.string().min(1).describe('Absolute path to the project root'),
       description: z.string().optional().describe('Short description of the project'),
       theme: z.enum(['light', 'dark']).optional().describe('Default: dark'),
@@ -24,7 +25,26 @@ export function registerBoardTools(server: McpServer, boardStore: BoardStore, hi
     },
     async (args) => {
       try {
-        const board = await boardStore.createBoard(args);
+        // Auto-create or find project by path if project_id not provided
+        let projectId = args.project_id;
+        if (!projectId) {
+          try {
+            // Try to find existing project by path
+            const projects = boardStore.listProjects();
+            const existing = projects.find(p => p.path === args.project_path);
+            if (existing) {
+              projectId = existing.id;
+            } else {
+              // Auto-create project from path
+              const projectName = args.project_path.split('/').filter(Boolean).pop() || args.name;
+              const project = boardStore.createProject({ name: projectName, path: args.project_path });
+              projectId = project.id;
+            }
+          } catch {
+            return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: { code: 'PROJECT_ERROR', message: 'Could not find or create project', suggestion: 'Register the project first via the web UI' } }) }] };
+          }
+        }
+        const board = await boardStore.createBoard({ ...args, project_id: projectId });
         await historyStore.createSnapshot(board.id, board);
         await historyStore.appendChangelog(board.id, {
           action: 'created',

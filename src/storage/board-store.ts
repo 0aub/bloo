@@ -562,7 +562,7 @@ export class BoardStore {
       let data: ElementData;
       if (input.data !== undefined) {
         const existing = parseJSON<Record<string, unknown>>(elRow.data, {});
-        data = { ...existing, ...input.data } as ElementData;
+        data = { ...existing, ...input.data } as unknown as ElementData;
       } else {
         data = parseJSON<ElementData>(elRow.data, {} as ElementData);
       }
@@ -703,7 +703,7 @@ export class BoardStore {
         let data: ElementData;
         if (update.data !== undefined) {
           const existing = parseJSON<Record<string, unknown>>(elRow.data, {});
-          data = { ...existing, ...update.data } as ElementData;
+          data = { ...existing, ...update.data } as unknown as ElementData;
         } else {
           data = parseJSON<ElementData>(elRow.data, {} as ElementData);
         }

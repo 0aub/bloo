@@ -9,7 +9,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { getExportPath } from '../storage/paths.js';
 
-export function registerBoardTools(server: McpServer, boardStore: BoardStore, historyStore: HistoryStore): void {
+export function registerBoardTools(server: McpServer, boardStore: BoardStore, historyStore: HistoryStore, defaultProjectId?: string): void {
 
   // --- create_board ---
   server.tool(
@@ -25,8 +25,8 @@ export function registerBoardTools(server: McpServer, boardStore: BoardStore, hi
     },
     async (args) => {
       try {
-        // Auto-create or find project by path if project_id not provided
-        let projectId = args.project_id;
+        // Use session project, explicit project_id, or auto-resolve from path
+        let projectId = args.project_id || defaultProjectId;
         if (!projectId) {
           try {
             // Try to find existing project by path

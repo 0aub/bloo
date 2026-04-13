@@ -8,8 +8,8 @@ import { registerConnectionTools } from './connections.js';
 import { registerHistoryTools } from './history.js';
 import { registerSearchTools } from './search.js';
 
-export function registerAllTools(server: McpServer, boardStore: BoardStore, historyStore: HistoryStore): void {
-  registerBoardTools(server, boardStore, historyStore);
+export function registerAllTools(server: McpServer, boardStore: BoardStore, historyStore: HistoryStore, defaultProjectId?: string): void {
+  registerBoardTools(server, boardStore, historyStore, defaultProjectId);
   registerSectionTools(server, boardStore, historyStore);
   registerElementTools(server, boardStore, historyStore);
   registerConnectionTools(server, boardStore, historyStore);

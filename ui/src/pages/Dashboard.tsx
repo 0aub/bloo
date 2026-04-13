@@ -167,9 +167,10 @@ export default function Dashboard({ onSelectBoard }: Props) {
                   </div>
                   <button
                     onClick={e => deleteProject(p.id, e)}
-                    style={{ opacity: 0, color: 'var(--fg-muted)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 0 }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                    style={{ color: 'var(--fg-muted)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: '0 2px', opacity: 0.3, transition: 'opacity 0.15s, color 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'hsl(0 60% 55%)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '0.3'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
+                    title="Remove project"
                   >×</button>
                 </div>
               )}
@@ -246,7 +247,8 @@ export default function Dashboard({ onSelectBoard }: Props) {
                     <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--fg-muted)' }}>Claude Code MCP Config</span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify({ mcpServers: { bloo: { url: "http://localhost:3000/mcp/sse" } } }, null, 2));
+                        const config = JSON.stringify({ mcpServers: { bloo: { url: `http://localhost:3000/mcp/sse?project=${selectedProject!.id}` } } }, null, 2);
+                        navigator.clipboard.writeText(config);
                       }}
                       style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', cursor: 'pointer', padding: 2, opacity: 0.5, transition: 'opacity 0.15s' }}
                       onMouseEnter={e => e.currentTarget.style.opacity = '1'}
@@ -263,7 +265,7 @@ export default function Dashboard({ onSelectBoard }: Props) {
                   }}>{`{
   "mcpServers": {
     "bloo": {
-      "url": "http://localhost:3000/mcp/sse"
+      "url": "http://localhost:3000/mcp/sse?project=${selectedProject?.id || ''}"
     }
   }
 }`}</pre>

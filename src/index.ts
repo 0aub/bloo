@@ -42,18 +42,24 @@ app.use(createRouter(boardStore, historyStore));
 // --- MCP over SSE ---
 const mcpTransports = new Map<string, SSEServerTransport>();
 
+// Store project context per MCP session
+export const sessionProjects = new Map<string, string>(); // sessionId → projectId
+
 app.get('/mcp/sse', async (req: any, res: any) => {
-  log('MCP SSE client connected');
+  const projectId = req.query.project as string | undefined;
+  log(`MCP SSE client connected${projectId ? ` (project: ${projectId})` : ''}`);
   const transport = new SSEServerTransport('/mcp/messages', res);
   const sessionId = transport.sessionId;
   mcpTransports.set(sessionId, transport);
+  if (projectId) sessionProjects.set(sessionId, projectId);
 
   const mcpServer = new McpServer({ name: 'bloo', version: '3.0.0' });
-  registerAllTools(mcpServer, boardStore, historyStore);
+  registerAllTools(mcpServer, boardStore, historyStore, projectId);
   await mcpServer.connect(transport);
 
   req.on('close', () => {
     mcpTransports.delete(sessionId);
+    sessionProjects.delete(sessionId);
     log('MCP SSE client disconnected');
   });
 });

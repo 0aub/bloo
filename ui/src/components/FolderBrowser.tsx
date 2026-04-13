@@ -69,7 +69,7 @@ export default function FolderBrowser({ onSelect }: Props) {
   };
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', maxHeight: 350 }}>
+    <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', height: 300 }}>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 px-3 py-2" style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)', fontSize: 11 }}>
         {parentPath && (
@@ -81,7 +81,7 @@ export default function FolderBrowser({ onSelect }: Props) {
       </div>
 
       {/* Tree */}
-      <div style={{ overflowY: 'auto', maxHeight: 310, padding: '4px 0' }}>
+      <div style={{ overflowY: 'auto', height: 'calc(100% - 36px)', padding: '4px 0' }}>
         {loading ? (
           <div style={{ padding: 16, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 12 }}>Loading...</div>
         ) : entries.length === 0 ? (

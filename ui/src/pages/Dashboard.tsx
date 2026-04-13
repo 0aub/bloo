@@ -76,8 +76,8 @@ export default function Dashboard({ onSelectBoard }: Props) {
 
         <div className="flex flex-col items-center justify-center h-full relative" style={{ zIndex: 1 }}>
           <img src="/logo.png" alt="Bloo" style={{ width: 96, height: 96, marginBottom: 28, filter: 'drop-shadow(0 0 20px hsl(152 65% 55% / 0.2))' }} />
-          <h1 style={{ fontSize: 40, fontWeight: 800, marginBottom: 6, background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Bloo
+          <h1 style={{ fontSize: 44, fontWeight: 400, marginBottom: 6, letterSpacing: 4, fontFamily: "'Fredoka', sans-serif", background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            bloo
           </h1>
           <p style={{ color: 'var(--fg-muted)', fontSize: 16, marginBottom: 48, letterSpacing: 0.5 }}>Blueprint your code</p>
 
@@ -122,8 +122,8 @@ export default function Dashboard({ onSelectBoard }: Props) {
         <div className="flex flex-col items-center py-5" style={{ borderBottom: '1px solid var(--border)' }}>
           <img src="/logo.png" alt="Bloo" style={{ width: sidebarCollapsed ? 28 : 44, height: sidebarCollapsed ? 28 : 44, transition: 'all 0.2s' }} />
           {!sidebarCollapsed && (
-            <span style={{ fontSize: 18, fontWeight: 800, marginTop: 8, letterSpacing: 2, fontFamily: "'Almarai', sans-serif", background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              BLOO
+            <span style={{ fontSize: 20, fontWeight: 400, marginTop: 8, letterSpacing: 3, fontFamily: "'Fredoka', sans-serif", background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              bloo
             </span>
           )}
         </div>

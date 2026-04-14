@@ -9,6 +9,7 @@
   --fg: hsl(0 0% 95%);
   --fg-muted: hsl(155 5% 55%);
   --primary: hsl(155 65% 30%);
+  --primary-fg: hsl(152 65% 70%);
   --accent: hsl(152 65% 55%);
   --border: hsl(160 8% 18%);
   --border-hover: hsl(155 15% 25%);
@@ -21,6 +22,7 @@
   --fg: hsl(220 15% 12%);
   --fg-muted: hsl(220 8% 50%);
   --primary: hsl(220 60% 45%);
+  --primary-fg: hsl(0 0% 100%);
   --accent: hsl(220 65% 50%);
   --border: hsl(220 10% 88%);
   --border-hover: hsl(220 15% 78%);

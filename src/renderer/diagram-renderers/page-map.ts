@@ -14,10 +14,10 @@ const H_GAP = 100;
 const V_GAP = 100;
 
 const pageTypeColors: Record<string, { fill: string; titleBg: string; border: string }> = {
-  page: { fill: 'hsl(200 40% 16%)', titleBg: 'hsl(200 50% 22%)', border: 'hsl(200 50% 45%)' },
-  modal: { fill: 'hsl(280 30% 16%)', titleBg: 'hsl(280 35% 22%)', border: 'hsl(280 40% 50%)' },
-  drawer: { fill: 'hsl(35 40% 16%)', titleBg: 'hsl(35 45% 22%)', border: 'hsl(35 60% 50%)' },
-  tab: { fill: 'hsl(180 30% 16%)', titleBg: 'hsl(180 35% 22%)', border: 'hsl(180 40% 48%)' },
+  page: { fill: 'hsl(200 35% 18%)', titleBg: 'hsl(200 40% 24%)', border: 'hsl(200 50% 45%)' },
+  modal: { fill: 'hsl(280 25% 18%)', titleBg: 'hsl(280 30% 24%)', border: 'hsl(280 40% 50%)' },
+  drawer: { fill: 'hsl(35 35% 18%)', titleBg: 'hsl(35 40% 24%)', border: 'hsl(35 55% 50%)' },
+  tab: { fill: 'hsl(180 25% 18%)', titleBg: 'hsl(180 30% 24%)', border: 'hsl(180 40% 48%)' },
 };
 
 function getPageColor(type?: string): { fill: string; titleBg: string; border: string } {
@@ -59,7 +59,7 @@ export function render(element: Element): string {
   // Background
   parts.push(roundedRect(0, 0, size.width, size.height, 8, {
     fill: 'hsl(160 10% 10%)',
-    stroke: 'hsl(160 8% 25%)',
+    stroke: 'hsl(160 10% 30%)',
     'stroke-width': 1.5,
   }));
 
@@ -178,7 +178,7 @@ export function render(element: Element): string {
     // Separator
     parts.push(line(x, y + TITLE_BAR_H, x + PAGE_WIDTH, y + TITLE_BAR_H, {
       stroke: pc.border,
-      'stroke-width': 0.6,
+      'stroke-width': 1,
     }));
 
     // Route
@@ -195,7 +195,7 @@ export function render(element: Element): string {
       parts.push(roundedRect(badgeX, badgeY, 34, 16, 3, {
         fill: 'hsl(38 50% 15%)',
         stroke: 'hsl(38 70% 50%)',
-        'stroke-width': 0.6,
+        'stroke-width': 1,
       }));
       parts.push(text(badgeX + 17, badgeY + 11, '\u{1F512} auth', {
         fill: 'hsl(38 70% 60%)',
@@ -233,7 +233,7 @@ export function render(element: Element): string {
       parts.push(roundedRect(x + PAGE_WIDTH - 44, y + PAGE_HEIGHT - 20, 38, 14, 3, {
         fill: pc.titleBg,
         stroke: pc.border,
-        'stroke-width': 0.5,
+        'stroke-width': 1,
       }));
       parts.push(text(x + PAGE_WIDTH - 25, y + PAGE_HEIGHT - 10, pg.type, {
         fill: pc.border,

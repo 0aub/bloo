@@ -43,10 +43,10 @@ const COL_BG = 'hsl(160 10% 10%)';
 const COL_CARD_BG = 'hsl(160 10% 10%)';
 const COL_TEXT = 'hsl(0 0% 95%)';
 const COL_MUTED = 'hsl(155 5% 55%)';
-const COL_BORDER = 'hsl(160 8% 25%)';
+const COL_BORDER = 'hsl(160 10% 30%)';
 const COL_ACCENT = 'hsl(152 65% 55%)';
-const COL_CONN = 'hsl(155 5% 45%)';
-const COL_HEADER_BG = 'hsl(160 8% 13%)';
+const COL_CONN = 'hsl(155 8% 50%)';
+const COL_HEADER_BG = 'hsl(160 8% 15%)';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

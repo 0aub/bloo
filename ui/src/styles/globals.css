@@ -90,17 +90,21 @@ svg .highlighted-node { filter: drop-shadow(0 0 8px var(--accent)) brightness(1.
 .light [data-element-id] svg [fill="hsl(155 5% 55%)"] { fill: hsl(155 8% 40%); }
 .light [data-element-id] svg [stroke="hsl(160 8% 18%)"] { stroke: hsl(150 8% 82%); }
 .light [data-element-id] svg [stroke="hsl(160 8% 25%)"] { stroke: hsl(150 8% 78%); }
+.light [data-element-id] svg [stroke="hsl(160 10% 30%)"] { stroke: hsl(150 10% 75%); }
+.light [data-element-id] svg [fill="hsl(160 8% 15%)"] { fill: hsl(150 6% 94%); }
 .light [data-element-id] svg [fill="hsl(155 5% 45%)"] { fill: hsl(155 10% 55%); }
 .light [data-element-id] svg [stroke="hsl(155 5% 45%)"] { stroke: hsl(155 10% 55%); }
-/* Page map updated fills */
-.light [data-element-id] svg [fill="hsl(200 40% 16%)"] { fill: hsl(200 35% 92%); }
-.light [data-element-id] svg [fill="hsl(200 50% 22%)"] { fill: hsl(200 40% 88%); }
-.light [data-element-id] svg [fill="hsl(280 30% 16%)"] { fill: hsl(280 25% 93%); }
-.light [data-element-id] svg [fill="hsl(280 35% 22%)"] { fill: hsl(280 30% 88%); }
-.light [data-element-id] svg [fill="hsl(35 40% 16%)"] { fill: hsl(35 35% 93%); }
-.light [data-element-id] svg [fill="hsl(35 45% 22%)"] { fill: hsl(35 40% 88%); }
-.light [data-element-id] svg [fill="hsl(180 30% 16%)"] { fill: hsl(180 25% 92%); }
-.light [data-element-id] svg [fill="hsl(180 35% 22%)"] { fill: hsl(180 30% 88%); }
+.light [data-element-id] svg [fill="hsl(155 8% 50%)"] { fill: hsl(155 12% 50%); }
+.light [data-element-id] svg [stroke="hsl(155 8% 50%)"] { stroke: hsl(155 12% 50%); }
+/* Page map fills */
+.light [data-element-id] svg [fill="hsl(200 35% 18%)"] { fill: hsl(200 35% 92%); }
+.light [data-element-id] svg [fill="hsl(200 40% 24%)"] { fill: hsl(200 35% 88%); }
+.light [data-element-id] svg [fill="hsl(280 25% 18%)"] { fill: hsl(280 25% 93%); }
+.light [data-element-id] svg [fill="hsl(280 30% 24%)"] { fill: hsl(280 25% 88%); }
+.light [data-element-id] svg [fill="hsl(35 35% 18%)"] { fill: hsl(35 35% 93%); }
+.light [data-element-id] svg [fill="hsl(35 40% 24%)"] { fill: hsl(35 35% 88%); }
+.light [data-element-id] svg [fill="hsl(180 25% 18%)"] { fill: hsl(180 25% 92%); }
+.light [data-element-id] svg [fill="hsl(180 30% 24%)"] { fill: hsl(180 25% 88%); }
 .light [data-element-id] svg [stroke="hsl(155 5% 35%)"] { stroke: hsl(155 10% 60%); }
 .light [data-element-id] svg [fill="hsl(155 5% 35%)"] { fill: hsl(155 10% 60%); }
 /* Component type backgrounds */

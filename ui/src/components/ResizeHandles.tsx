@@ -6,9 +6,9 @@ interface Props {
   onResizeStart: (dir: ResizeDir, e: React.MouseEvent) => void;
 }
 
-const HANDLE_SIZE = 10;
-const BRACKET_LEN = 18;
-const BRACKET_THICK = 2;
+const HANDLE_SIZE = 16;
+const BRACKET_LEN = 24;
+const BRACKET_THICK = 3;
 
 interface HandleDef {
   dir: ResizeDir;
@@ -59,22 +59,22 @@ const handles: HandleDef[] = [
   {
     dir: 'n',
     cursor: 'ns-resize',
-    style: { top: -3, left: '50%', transform: 'translateX(-50%)', width: 24, height: 6 },
+    style: { top: -4, left: '50%', transform: 'translateX(-50%)', width: 36, height: 8 },
   },
   {
     dir: 's',
     cursor: 'ns-resize',
-    style: { bottom: -3, left: '50%', transform: 'translateX(-50%)', width: 24, height: 6 },
+    style: { bottom: -4, left: '50%', transform: 'translateX(-50%)', width: 36, height: 8 },
   },
   {
     dir: 'w',
     cursor: 'ew-resize',
-    style: { left: -3, top: '50%', transform: 'translateY(-50%)', width: 6, height: 24 },
+    style: { left: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 36 },
   },
   {
     dir: 'e',
     cursor: 'ew-resize',
-    style: { right: -3, top: '50%', transform: 'translateY(-50%)', width: 6, height: 24 },
+    style: { right: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 36 },
   },
 ];
 

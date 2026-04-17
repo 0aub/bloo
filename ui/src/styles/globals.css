@@ -16,16 +16,16 @@
 }
 
 .light {
-  --bg: hsl(210 15% 97%);
+  --bg: hsl(150 10% 97%);
   --bg-card: hsl(0 0% 100%);
-  --bg-elevated: hsl(210 10% 94%);
-  --fg: hsl(220 15% 12%);
-  --fg-muted: hsl(220 8% 50%);
-  --primary: hsl(220 60% 45%);
+  --bg-elevated: hsl(150 6% 94%);
+  --fg: hsl(160 20% 9%);
+  --fg-muted: hsl(155 8% 45%);
+  --primary: hsl(155 60% 28%);
   --primary-fg: hsl(0 0% 100%);
-  --accent: hsl(220 65% 50%);
-  --border: hsl(220 10% 88%);
-  --border-hover: hsl(220 15% 78%);
+  --accent: hsl(152 55% 45%);
+  --border: hsl(150 8% 85%);
+  --border-hover: hsl(155 12% 78%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -69,9 +69,95 @@ body::before {
   50% { opacity: 0.8; transform: scale(1.05); }
 }
 
+/* Card SVGs — viewBox-only, no width/height attrs, scale to container */
+[data-element-id] svg { width: 100%; height: 100%; display: block; }
+[data-element-id] .svg-body { width: 100%; height: 100%; overflow: hidden; }
+[data-element-id] .svg-body svg { width: 100%; height: 100%; }
+
 /* SVG interactive highlights */
 svg .hoverable { cursor: pointer; transition: opacity 0.15s, filter 0.15s; }
 svg .hoverable:hover { filter: brightness(1.2); }
 svg .dimmed { opacity: 0.15; transition: opacity 0.3s; }
 svg .highlighted-conn { stroke-width: 3 !important; filter: drop-shadow(0 0 6px var(--accent)); }
 svg .highlighted-node { filter: drop-shadow(0 0 8px var(--accent)) brightness(1.2); }
+
+/* Light theme SVG color remapping — dark fills become light */
+.light [data-element-id] svg [fill="hsl(160 10% 10%)"] { fill: hsl(0 0% 100%); }
+.light [data-element-id] svg [fill="hsl(160 10% 10% / 0.8)"] { fill: hsl(0 0% 100%); }
+.light [data-element-id] svg [fill="hsl(160 8% 13%)"] { fill: hsl(150 6% 94%); }
+.light [data-element-id] svg [fill="hsl(160 15% 7%)"] { fill: hsl(150 10% 97%); }
+.light [data-element-id] svg [fill="hsl(0 0% 95%)"] { fill: hsl(160 20% 9%); }
+.light [data-element-id] svg [fill="hsl(155 5% 55%)"] { fill: hsl(155 8% 40%); }
+.light [data-element-id] svg [stroke="hsl(160 8% 18%)"] { stroke: hsl(150 8% 82%); }
+.light [data-element-id] svg [stroke="hsl(160 8% 25%)"] { stroke: hsl(150 8% 78%); }
+.light [data-element-id] svg [fill="hsl(155 5% 45%)"] { fill: hsl(155 10% 55%); }
+.light [data-element-id] svg [stroke="hsl(155 5% 45%)"] { stroke: hsl(155 10% 55%); }
+/* Page map updated fills */
+.light [data-element-id] svg [fill="hsl(200 40% 16%)"] { fill: hsl(200 35% 92%); }
+.light [data-element-id] svg [fill="hsl(200 50% 22%)"] { fill: hsl(200 40% 88%); }
+.light [data-element-id] svg [fill="hsl(280 30% 16%)"] { fill: hsl(280 25% 93%); }
+.light [data-element-id] svg [fill="hsl(280 35% 22%)"] { fill: hsl(280 30% 88%); }
+.light [data-element-id] svg [fill="hsl(35 40% 16%)"] { fill: hsl(35 35% 93%); }
+.light [data-element-id] svg [fill="hsl(35 45% 22%)"] { fill: hsl(35 40% 88%); }
+.light [data-element-id] svg [fill="hsl(180 30% 16%)"] { fill: hsl(180 25% 92%); }
+.light [data-element-id] svg [fill="hsl(180 35% 22%)"] { fill: hsl(180 30% 88%); }
+.light [data-element-id] svg [stroke="hsl(155 5% 35%)"] { stroke: hsl(155 10% 60%); }
+.light [data-element-id] svg [fill="hsl(155 5% 35%)"] { fill: hsl(155 10% 60%); }
+/* Component type backgrounds */
+.light [data-element-id] svg [fill="hsl(200 50% 15%)"] { fill: hsl(200 40% 92%); }
+.light [data-element-id] svg [fill="hsl(152 40% 15%)"] { fill: hsl(152 35% 92%); }
+.light [data-element-id] svg [fill="hsl(35 50% 15%)"] { fill: hsl(35 40% 92%); }
+.light [data-element-id] svg [fill="hsl(0 40% 15%)"] { fill: hsl(0 35% 94%); }
+.light [data-element-id] svg [fill="hsl(280 30% 15%)"] { fill: hsl(280 25% 93%); }
+.light [data-element-id] svg [fill="hsl(155 5% 15%)"] { fill: hsl(155 5% 93%); }
+.light [data-element-id] svg [fill="hsl(180 30% 15%)"] { fill: hsl(180 25% 92%); }
+.light [data-element-id] svg [fill="hsl(320 30% 15%)"] { fill: hsl(320 25% 93%); }
+.light [data-element-id] svg [fill="hsl(152 35% 15%)"] { fill: hsl(152 30% 92%); }
+.light [data-element-id] svg [fill="hsl(35 45% 15%)"] { fill: hsl(35 40% 92%); }
+.light [data-element-id] svg [fill="hsl(180 35% 15%)"] { fill: hsl(180 30% 92%); }
+/* Flow chart node fills */
+.light [data-element-id] svg [fill="hsl(200 40% 15%)"] { fill: hsl(200 35% 92%); }
+.light [data-element-id] svg [fill="hsl(38 50% 15%)"] { fill: hsl(38 45% 93%); }
+/* Dependency graph */
+.light [data-element-id] svg [fill="hsl(200 40% 13%)"] { fill: hsl(200 35% 93%); }
+.light [data-element-id] svg [fill="hsl(155 5% 12%)"] { fill: hsl(155 5% 94%); }
+.light [data-element-id] svg [fill="hsl(155 5% 10%)"] { fill: hsl(155 5% 95%); }
+/* Method/permission badge backgrounds */
+.light [data-element-id] svg [fill="hsl(210 40% 15%)"] { fill: hsl(210 40% 90%); }
+.light [data-element-id] svg [fill="hsl(50 45% 15%)"] { fill: hsl(50 45% 90%); }
+.light [data-element-id] svg [fill="hsl(320 35% 15%)"] { fill: hsl(320 35% 90%); }
+/* Security map layer fills */
+.light [data-element-id] svg [fill="hsl(0 40% 12%)"] { fill: hsl(0 35% 94%); }
+.light [data-element-id] svg [fill="hsl(20 45% 12%)"] { fill: hsl(20 40% 93%); }
+.light [data-element-id] svg [fill="hsl(38 45% 12%)"] { fill: hsl(38 40% 93%); }
+.light [data-element-id] svg [fill="hsl(65 40% 12%)"] { fill: hsl(65 35% 93%); }
+.light [data-element-id] svg [fill="hsl(100 35% 12%)"] { fill: hsl(100 30% 93%); }
+.light [data-element-id] svg [fill="hsl(130 35% 12%)"] { fill: hsl(130 30% 93%); }
+.light [data-element-id] svg [fill="hsl(152 40% 12%)"] { fill: hsl(152 35% 93%); }
+/* Semi-transparent overlays */
+.light [data-element-id] svg [fill="hsl(160 10% 10% / 0.4)"] { fill: hsl(150 8% 90% / 0.4); }
+.light [data-element-id] svg [fill="hsl(152 40% 15% / 0.3)"] { fill: hsl(152 40% 80% / 0.3); }
+/* Env map backgrounds */
+.light [data-element-id] svg [fill="hsl(200 40% 12%)"] { fill: hsl(200 35% 93%); }
+.light [data-element-id] svg [fill="hsl(200 50% 18%)"] { fill: hsl(200 40% 88%); }
+/* Page map */
+.light [data-element-id] svg [fill="hsl(152 65% 55% / 0.08)"] { fill: hsl(152 55% 45% / 0.12); }
+/* Docker/environment tier fills */
+.light [data-element-id] svg [fill="hsl(210 40% 12%)"] { fill: hsl(210 35% 93%); }
+.light [data-element-id] svg [fill="hsl(35 40% 12%)"] { fill: hsl(35 35% 93%); }
+.light [data-element-id] svg [fill="hsl(152 35% 12%)"] { fill: hsl(152 30% 93%); }
+/* Muted fills/strokes */
+.light [data-element-id] svg [fill="hsl(155 5% 40%)"] { fill: hsl(155 8% 70%); }
+.light [data-element-id] svg [stroke="hsl(155 5% 30%)"] { stroke: hsl(155 8% 75%); }
+.light [data-element-id] svg [stroke="hsl(155 5% 35%)"] { stroke: hsl(155 15% 50%); }
+.light [data-element-id] svg [stroke="hsl(155 5% 55%)"] { stroke: hsl(155 10% 40%); }
+/* DB schema rows */
+.light [data-element-id] svg [fill="hsl(160 8% 11%)"] { fill: hsl(150 6% 95%); }
+/* Sequence diagram markers */
+.light [data-element-id] svg marker [fill="hsl(0 0% 95%)"] { fill: hsl(160 20% 9%); }
+.light [data-element-id] svg [stroke="hsl(0 0% 95%)"] { stroke: hsl(160 20% 30%); }
+/* Remaining dark fills */
+.light [data-element-id] svg [fill="hsl(280 35% 15%)"] { fill: hsl(280 30% 90%); }
+.light [data-element-id] svg [fill="hsl(0 60% 20%)"] { fill: hsl(0 50% 92%); }
+.light [data-element-id] svg [fill="hsl(38 50% 20%)"] { fill: hsl(38 45% 92%); }
+.light [data-element-id] svg [fill="hsl(152 40% 18%)"] { fill: hsl(152 35% 92%); }

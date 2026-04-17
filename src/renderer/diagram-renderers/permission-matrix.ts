@@ -26,7 +26,24 @@ function getActionColor(action: string): { bg: string; text: string } {
 
 export function render(element: Element): string {
   const data = element.data as PermissionMatrixData;
-  const { roles, resources } = data;
+  const roles = data.roles || [];
+  const rawResources = data.resources || (data as any).permissions || [];
+  // Normalize resources: handle both { name, permissions } and { resource, role: boolean } formats
+  const resources = rawResources.map((r: any) => {
+    if (r.name && r.permissions) return r;
+    const name = r.name || r.resource || '';
+    const permissions: Record<string, string[]> = {};
+    for (const role of roles) {
+      if (r[role] === true) {
+        permissions[role] = ['access'];
+      } else if (Array.isArray(r[role])) {
+        permissions[role] = r[role];
+      } else {
+        permissions[role] = [];
+      }
+    }
+    return { name, permissions };
+  });
   const size = calculateSize(element);
 
   const parts: string[] = [];
@@ -138,7 +155,12 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as PermissionMatrixData;
-  const { roles, resources } = data;
+  const roles = data.roles || [];
+  const rawResources = data.resources || (data as any).permissions || [];
+  const resources = rawResources.map((r: any) => {
+    if (r.name && r.permissions) return r;
+    return { name: r.name || r.resource || '', permissions: {} };
+  });
 
   const width = PAD * 2 + RESOURCE_COL_WIDTH + roles.length * COL_WIDTH;
   const height = PAD + 32 + HEADER_HEIGHT + 4 + resources.length * ROW_HEIGHT + PAD;

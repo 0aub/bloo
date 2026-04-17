@@ -14,10 +14,10 @@ const H_GAP = 100;
 const V_GAP = 100;
 
 const pageTypeColors: Record<string, { fill: string; titleBg: string; border: string }> = {
-  page: { fill: 'hsl(200 40% 12%)', titleBg: 'hsl(200 50% 18%)', border: 'hsl(200 50% 40%)' },
-  modal: { fill: 'hsl(280 30% 12%)', titleBg: 'hsl(280 35% 18%)', border: 'hsl(280 40% 45%)' },
-  drawer: { fill: 'hsl(35 40% 12%)', titleBg: 'hsl(35 45% 18%)', border: 'hsl(35 60% 45%)' },
-  tab: { fill: 'hsl(180 30% 12%)', titleBg: 'hsl(180 35% 18%)', border: 'hsl(180 40% 42%)' },
+  page: { fill: 'hsl(200 40% 16%)', titleBg: 'hsl(200 50% 22%)', border: 'hsl(200 50% 45%)' },
+  modal: { fill: 'hsl(280 30% 16%)', titleBg: 'hsl(280 35% 22%)', border: 'hsl(280 40% 50%)' },
+  drawer: { fill: 'hsl(35 40% 16%)', titleBg: 'hsl(35 45% 22%)', border: 'hsl(35 60% 50%)' },
+  tab: { fill: 'hsl(180 30% 16%)', titleBg: 'hsl(180 35% 22%)', border: 'hsl(180 40% 48%)' },
 };
 
 function getPageColor(type?: string): { fill: string; titleBg: string; border: string } {
@@ -40,7 +40,8 @@ function getPageCenter(index: number): { cx: number; cy: number } {
 
 export function render(element: Element): string {
   const data = element.data as PageMapData;
-  const { pages, navigations } = data;
+  const pages = data.pages || [];
+  const navigations = data.navigations || [];
   const size = calculateSize(element);
 
   const parts: string[] = [];
@@ -58,7 +59,7 @@ export function render(element: Element): string {
   // Background
   parts.push(roundedRect(0, 0, size.width, size.height, 8, {
     fill: 'hsl(160 10% 10%)',
-    stroke: 'hsl(160 8% 18%)',
+    stroke: 'hsl(160 8% 25%)',
     'stroke-width': 1.5,
   }));
 
@@ -248,7 +249,7 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as PageMapData;
-  const { pages } = data;
+  const pages = data.pages || [];
 
   const count = pages.length || 1;
   const cols = Math.min(count, COLS);

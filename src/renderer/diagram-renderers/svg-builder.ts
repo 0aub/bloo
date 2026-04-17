@@ -7,11 +7,13 @@ function attrs(obj: Record<string, string | number | undefined>): string {
     .join(' ');
 }
 
-function escapeAttr(s: string): string {
+function escapeAttr(s: string | undefined | null): string {
+  if (!s) return '';
   return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function escapeHtml(s: string): string {
+export function escapeHtml(s: string | undefined | null): string {
+  if (!s) return '';
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 

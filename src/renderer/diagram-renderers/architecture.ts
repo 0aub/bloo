@@ -450,8 +450,11 @@ function renderLayerBackgrounds(
 
 export function render(element: Element): string {
   const data = element.data as ArchitectureDiagramData;
-  const components = data.components || [];
-  const connections = data.connections || [];
+  const rawComponents = data.components || (data as any).nodes || [];
+  // Normalize: Claude may send {label} instead of {name}, {from/to} for connections
+  const components = rawComponents.map((c: any) => ({ ...c, name: c.name || c.label || '' }));
+  const rawConns = data.connections || (data as any).edges || [];
+  const connections = rawConns.map((c: any) => ({ ...c, from: c.from || c.source || '', to: c.to || c.target || '' }));
   const layers = data.layers;
 
   if (components.length === 0) {
@@ -497,7 +500,8 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as ArchitectureDiagramData;
-  const components = data.components || [];
+  const rawComponents = data.components || (data as any).nodes || [];
+  const components = rawComponents.map((c: any) => ({ ...c, name: c.name || c.label || '' }));
   const layers = data.layers;
 
   if (components.length === 0) return { width: 300, height: 100 };

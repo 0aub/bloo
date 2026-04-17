@@ -102,6 +102,8 @@ export const api = {
   getBoard: (id: string) => request<{ success: boolean; data: { board: Board; stats: any } }>(`/api/boards/${id}`),
   getSvg: (boardId: string, elementId: string) =>
     fetch(`/api/boards/${boardId}/render/${elementId}`).then(r => r.text()),
+  getElementSizes: (boardId: string) =>
+    request<{ success: boolean; data: { sizes: Record<string, { width: number; height: number }> } }>(`/api/boards/${boardId}/sizes`),
   // Layout
   saveLayout: (boardId: string, layouts: Array<{ element_id: string; x: number; y: number; w: number; h: number }>) =>
     request<{ success: boolean }>(`/api/boards/${boardId}/layout`, {

@@ -3,9 +3,11 @@ import React from 'react';
 interface Props {
   title: string;
   subtitle: string;
+  version?: number;
   scale: number;
   editMode: boolean;
   theme: 'dark' | 'light';
+  onBack?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
@@ -31,10 +33,11 @@ function IconButton({
     <button
       onClick={onClick}
       title={title}
-      className="flex items-center justify-center w-8 h-8 rounded-md transition-colors duration-150"
+      className="flex items-center justify-center w-7 h-7 rounded-md"
       style={{
         background: active ? 'var(--accent)' : 'transparent',
-        color: active ? '#fff' : 'var(--fg-muted)',
+        color: active ? 'var(--bg)' : 'var(--fg-muted)',
+        transition: 'all 0.12s',
       }}
       onMouseEnter={e => {
         if (!active) e.currentTarget.style.background = 'var(--bg-elevated)';
@@ -143,9 +146,11 @@ const Icons = {
 export default function Toolbar({
   title,
   subtitle,
+  version,
   scale,
   editMode,
   theme,
+  onBack,
   onZoomIn,
   onZoomOut,
   onFitAll,
@@ -157,72 +162,96 @@ export default function Toolbar({
 }: Props) {
   return (
     <div
-      className="flex items-center gap-2 px-4 py-2 select-none shrink-0"
+      className="flex items-center gap-3 px-5 py-2 select-none shrink-0"
       style={{
-        background: 'var(--bg-card)',
+        background: theme === 'dark' ? 'hsl(160 10% 8% / 0.95)' : 'hsl(150 10% 97% / 0.95)',
+        backdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--border)',
-        zIndex: 50,
+        zIndex: 100,
+        height: 44,
       }}
     >
+      {/* Back button */}
+      {onBack && (
+        <IconButton onClick={onBack} title="Back (Esc)">
+          {Icons.ArrowLeft}
+        </IconButton>
+      )}
+
       {/* Left: title */}
-      <div className="flex-1 min-w-0">
-        <h1
-          className="text-sm font-bold truncate leading-tight"
-          style={{ color: 'var(--fg)' }}
+      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+        <span
+          className="text-base font-extrabold truncate leading-tight"
+          style={{
+            background: 'linear-gradient(135deg, hsl(155 65% 40%), hsl(152 65% 60%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
         >
           {title}
-        </h1>
+        </span>
         {subtitle && (
-          <p
-            className="text-[11px] truncate leading-tight"
+          <span
+            className="text-xs truncate leading-tight"
             style={{ color: 'var(--fg-muted)' }}
           >
             {subtitle}
-          </p>
+          </span>
+        )}
+        {version != null && (
+          <span
+            className="text-[11px] font-mono"
+            style={{ color: 'var(--fg-muted)' }}
+          >
+            v{version}
+          </span>
         )}
       </div>
 
-      {/* Center: zoom controls */}
-      <div className="flex items-center gap-0.5">
+      {/* Zoom display */}
+      <span
+        className="text-[11px] font-mono"
+        style={{ color: 'var(--fg-muted)', minWidth: 36, textAlign: 'center' }}
+      >
+        {Math.round(scale * 100)}%
+      </span>
+
+      {/* Toolbar button group */}
+      <div
+        className="flex items-center gap-0.5"
+        style={{
+          background: 'var(--bg)',
+          border: '1px solid var(--border)',
+          borderRadius: 8,
+          padding: 2,
+        }}
+      >
         <IconButton onClick={onZoomOut} title="Zoom out (-)">
           {Icons.ZoomOut}
         </IconButton>
-        <span
-          className="text-[11px] font-mono w-10 text-center"
-          style={{ color: 'var(--fg-muted)' }}
-        >
-          {Math.round(scale * 100)}%
-        </span>
         <IconButton onClick={onZoomIn} title="Zoom in (+)">
           {Icons.ZoomIn}
         </IconButton>
         <IconButton onClick={onFitAll} title="Fit all (F)">
           {Icons.Maximize}
         </IconButton>
-      </div>
 
-      <Separator />
+        <Separator />
 
-      {/* Right: actions */}
-      <div className="flex items-center gap-0.5">
         <IconButton onClick={onSearch} title="Search (/)">
           {Icons.Search}
         </IconButton>
         <IconButton onClick={onToggleTheme} title="Toggle theme (T)">
           {theme === 'dark' ? Icons.Sun : Icons.Moon}
         </IconButton>
-        <IconButton onClick={onToggleEdit} title="Edit mode (E)" active={editMode}>
-          {Icons.Edit}
+        <IconButton onClick={() => { if (editMode) { onSaveLayout(); } onToggleEdit(); }} title={editMode ? 'Save & exit edit (E)' : 'Edit mode (E)'} active={editMode}>
+          {editMode ? Icons.Save : Icons.Edit}
         </IconButton>
-        {editMode && (
-          <IconButton onClick={onSaveLayout} title="Save layout">
-            {Icons.Save}
-          </IconButton>
-        )}
 
         <Separator />
 
-        <IconButton onClick={onExportHtml} title="Export HTML">
+        <IconButton onClick={onExportHtml} title="Export as HTML">
           {Icons.Download}
         </IconButton>
       </div>

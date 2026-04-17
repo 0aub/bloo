@@ -326,8 +326,8 @@ export default function Dashboard({ onSelectBoard }: Props) {
   );
 
   function renderMcpInfo(project: Project) {
-    const sseUrl = `http://localhost:3000/mcp/sse?project=${project.id}`;
-    const cliCmd = `claude mcp add bloo "${sseUrl}" -t sse -s project`;
+    const sseUrl = `http://localhost:3000/mcp?project=${project.id}`;
+    const cliCmd = `claude mcp add bloo "${sseUrl}" -s project`;
     const jsonConfig = JSON.stringify({ mcpServers: { bloo: { url: sseUrl } } }, null, 2);
 
     const codeBlock = (text: string, wrap?: boolean) => (

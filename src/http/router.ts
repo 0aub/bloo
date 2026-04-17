@@ -242,11 +242,32 @@ export function createRouter(boardStore: BoardStore, historyStore: HistoryStore)
       const renderer = getRenderer(element.type);
       const svgContent = renderer.render(element);
       const size = renderer.calculateSize(element);
-      const svg = `<svg viewBox="0 0 ${size.width} ${size.height}" width="${size.width}" height="${size.height}" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
+      const svg = `<svg viewBox="0 0 ${size.width} ${size.height}" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
       res.set('Content-Type', 'image/svg+xml');
       res.send(svg);
     } catch (e: any) {
       res.status(404).json({ success: false, error: e.message });
+    }
+  });
+
+  // --- Element sizes (for layout) ---
+  router.get('/api/boards/:boardId/sizes', async (req, res) => {
+    try {
+      const board = await boardStore.getBoard(req.params.boardId);
+      const sizes: Record<string, { width: number; height: number }> = {};
+      for (const section of board.sections) {
+        for (const element of section.elements) {
+          try {
+            const renderer = getRenderer(element.type);
+            sizes[element.id] = renderer.calculateSize(element);
+          } catch {
+            sizes[element.id] = { width: 320, height: 200 };
+          }
+        }
+      }
+      res.json({ success: true, data: { sizes } });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
     }
   });
 

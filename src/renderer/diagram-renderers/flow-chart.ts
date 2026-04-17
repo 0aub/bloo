@@ -329,8 +329,9 @@ function arrowDefs(): string {
 
 export function render(element: Element): string {
   const data = element.data as FlowChartData;
-  const nodes = data.nodes || [];
-  const edges = data.edges || [];
+  const rawNodes = data.nodes || (data as any).steps || [];
+  const nodes = rawNodes.map((n: any) => ({ ...n, name: n.name || n.label || '' }));
+  const edges = (data.edges || (data as any).connections || []).map((e: any) => ({ ...e, from: e.from || e.source || '', to: e.to || e.target || '' }));
   if (nodes.length === 0) return text(60, 40, 'No nodes defined', { fill: COL_MUTED, 'font-size': FONT_SIZE, 'font-family': FONT });
 
   const { layouts } = layoutNodes(nodes, edges);
@@ -345,8 +346,9 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as FlowChartData;
-  const nodes = data.nodes || [];
-  const edges = data.edges || [];
+  const rawNodes = data.nodes || (data as any).steps || [];
+  const nodes = rawNodes.map((n: any) => ({ ...n, name: n.name || n.label || '' }));
+  const edges = (data.edges || (data as any).connections || []).map((e: any) => ({ ...e, from: e.from || e.source || '', to: e.to || e.target || '' }));
   if (nodes.length === 0) return { width: 300, height: 100 };
   const { totalW, totalH } = layoutNodes(nodes, edges);
   return { width: Math.max(300, totalW), height: Math.max(150, totalH) };

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import Card, { type CardPosition } from './Card';
 import { type Section, type Element } from '../api/client';
 
@@ -28,6 +28,8 @@ interface Props {
   visible: boolean;
   onUpdatePosition: (id: string, x: number, y: number) => void;
   onUpdateSize: (id: string, pos: CardPosition) => void;
+  onUpdateSectionPos: (index: number, x: number, y: number) => void;
+  onZoom: (newScale: number) => void;
   scrollToRef: React.MutableRefObject<((elementId: string) => void) | null>;
 }
 
@@ -42,11 +44,62 @@ export default function Canvas({
   visible,
   onUpdatePosition,
   onUpdateSize,
+  onUpdateSectionPos,
+  onZoom,
   scrollToRef,
 }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [panning, setPanning] = useState(false);
   const panRef = useRef<{ startX: number; startY: number; scrollX: number; scrollY: number } | null>(null);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
+  const onZoomRef = useRef(onZoom);
+  onZoomRef.current = onZoom;
+  // Pending scroll target after zoom — applied in a layout effect
+  const pendingScrollRef = useRef<{ left: number; top: number } | null>(null);
+
+  // After React re-renders with new scale, apply the deferred scroll
+  useEffect(() => {
+    if (pendingScrollRef.current && wrapperRef.current) {
+      wrapperRef.current.scrollLeft = pendingScrollRef.current.left;
+      wrapperRef.current.scrollTop = pendingScrollRef.current.top;
+      pendingScrollRef.current = null;
+    }
+  }, [scale]);
+
+  // Ctrl+Scroll wheel zoom (toward cursor position) — stable listener
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+
+      const curScale = scaleRef.current;
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      const newScale = Math.min(3, Math.max(0.15, Math.round(curScale * factor * 100) / 100));
+      if (newScale === curScale) return;
+
+      // Compute cursor position in canvas space (unscaled)
+      const rect = wrapper.getBoundingClientRect();
+      const cursorViewX = e.clientX - rect.left;
+      const cursorViewY = e.clientY - rect.top;
+      const canvasX = (wrapper.scrollLeft + cursorViewX) / curScale;
+      const canvasY = (wrapper.scrollTop + cursorViewY) / curScale;
+
+      // Defer scroll to after React re-renders with new spacer size
+      pendingScrollRef.current = {
+        left: canvasX * newScale - cursorViewX,
+        top: canvasY * newScale - cursorViewY,
+      };
+
+      onZoomRef.current(newScale);
+    };
+
+    wrapper.addEventListener('wheel', handleWheel, { passive: false });
+    return () => wrapper.removeEventListener('wheel', handleWheel);
+  }, []); // stable — no deps, uses refs
 
   // Pan by dragging background
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -138,29 +191,56 @@ export default function Canvas({
         {sectionLabels.map((sec, i) => (
           <div
             key={i}
-            data-canvas-bg="true"
-            className="absolute rounded-lg pointer-events-none"
+            data-canvas-bg={editMode ? undefined : "true"}
+            className="absolute"
             style={{
               left: sec.x,
               top: sec.y,
               width: sec.w,
               height: sec.h,
-              border: '1px dashed var(--border)',
-              background: 'transparent',
+              border: editMode ? '1.5px dashed var(--border-hover)' : '1.5px dashed var(--border)',
+              borderRadius: 12,
+              background: 'hsl(152 65% 55% / 0.02)',
+              padding: '8px 14px',
+              pointerEvents: editMode ? 'auto' : 'none',
+              cursor: editMode ? 'grab' : 'default',
+              transition: 'border-color 0.15s',
             }}
+            onMouseDown={editMode ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const startX = e.clientX;
+              const startY = e.clientY;
+              const origX = sec.x;
+              const origY = sec.y;
+              const curScale = scaleRef.current;
+
+              const onMove = (ev: MouseEvent) => {
+                const dx = (ev.clientX - startX) / curScale;
+                const dy = (ev.clientY - startY) / curScale;
+                onUpdateSectionPos(i, origX + dx, origY + dy);
+              };
+              const onUp = () => {
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onUp);
+              };
+              window.addEventListener('mousemove', onMove);
+              window.addEventListener('mouseup', onUp);
+            } : undefined}
           >
-            <div
-              className="absolute -top-6 left-3 text-xs font-semibold px-2 py-0.5 rounded"
+            <span
               style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
                 color: 'var(--fg-muted)',
-                background: 'var(--bg)',
+                opacity: 0.6,
+                whiteSpace: 'nowrap',
               }}
             >
               {sec.title}
-              {sec.category && (
-                <span className="ml-2 opacity-50">{sec.category}</span>
-              )}
-            </div>
+            </span>
           </div>
         ))}
 

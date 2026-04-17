@@ -2,6 +2,8 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { randomUUID } from 'node:crypto';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -74,6 +76,73 @@ app.post('/mcp/messages', async (req: any, res: any) => {
   await transport.handlePostMessage(req, res);
 });
 
+// --- MCP over Streamable HTTP ---
+const httpTransports = new Map<string, StreamableHTTPServerTransport>();
+
+app.all('/mcp', async (req: any, res: any) => {
+  try {
+    const projectId = req.query.project as string | undefined;
+
+    // Check for existing session
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    if (sessionId && httpTransports.has(sessionId)) {
+      const transport = httpTransports.get(sessionId)!;
+      await transport.handleRequest(req, res, req.body);
+      return;
+    }
+
+    // New session — only on POST with initialize method
+    if (req.method === 'POST') {
+      const body = req.body;
+      const isInit = (Array.isArray(body) ? body : [body]).some(
+        (msg: any) => msg.method === 'initialize'
+      );
+      if (isInit) {
+        log(`MCP HTTP client connected${projectId ? ` (project: ${projectId})` : ''}`);
+        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() });
+        const mcpServer = new McpServer({ name: 'bloo', version: '3.0.0' });
+        registerAllTools(mcpServer, boardStore, historyStore, projectId);
+
+        transport.onerror = (err) => {
+          log(`MCP transport error: ${err.message}`);
+        };
+
+        transport.onclose = () => {
+          if (transport.sessionId) {
+            httpTransports.delete(transport.sessionId);
+            sessionProjects.delete(transport.sessionId);
+          }
+          log('MCP HTTP client disconnected');
+        };
+
+        await mcpServer.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+        // Session ID is assigned during handleRequest
+        const sid = transport.sessionId;
+        log(`MCP session created: ${sid}`);
+        if (sid) {
+          httpTransports.set(sid, transport);
+          if (projectId) sessionProjects.set(sid, projectId);
+        }
+        return;
+      }
+    }
+
+    // No session and not an init request
+    if (req.method === 'GET') {
+      log(`MCP GET without session (likely SSE probe) — returning 405`);
+      res.status(405).set('Allow', 'POST').json({ error: 'Method not allowed. Use POST with initialize.' });
+    } else {
+      res.status(400).json({ error: 'No valid session. Send an initialize request first.' });
+    }
+  } catch (err: any) {
+    log(`MCP endpoint error: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
 // Serve React frontend (static files from dist/public)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
@@ -93,6 +162,7 @@ app.use((req: any, res: any, next: any) => {
 const port = parseInt(process.env.BLOO_HTTP_PORT || '3000');
 app.listen(port, '0.0.0.0', () => {
   log(`HTTP server running on http://0.0.0.0:${port}`);
-  log(`MCP SSE endpoint: http://0.0.0.0:${port}/mcp/sse`);
+  log(`MCP Streamable HTTP: http://0.0.0.0:${port}/mcp`);
+  log(`MCP SSE (legacy): http://0.0.0.0:${port}/mcp/sse`);
   log(`Web UI: http://0.0.0.0:${port}`);
 });

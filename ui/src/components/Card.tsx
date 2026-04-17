@@ -43,7 +43,9 @@ export default function Card({ boardId, element, pos, editMode, scale, onMove, o
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [svgLoading, setSvgLoading] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [selected, setSelected] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const resizeRef = useRef<{ dir: ResizeDir; startX: number; startY: number; orig: CardPosition } | null>(null);
 
@@ -59,6 +61,114 @@ export default function Card({ boardId, element, pos, editMode, scale, onMove, o
       .catch(() => setSvgContent(null))
       .finally(() => setSvgLoading(false));
   }, [boardId, element.id, isNote, isText]);
+
+  // SVG node interactivity — wire up hover/click highlighting
+  useEffect(() => {
+    const container = svgRef.current;
+    if (!container || !svgContent) return;
+
+    const svg = container.querySelector('svg');
+    if (!svg) return;
+
+    const nodes = svg.querySelectorAll('[data-node-id]');
+    const connections = svg.querySelectorAll('[data-conn-from]');
+    if (nodes.length === 0) return;
+
+    let lockedNodeId: string | null = null;
+
+    function highlightNode(targetId: string) {
+      // Dim all nodes and connections
+      nodes.forEach(n => {
+        n.classList.add('hoverable');
+        n.classList.add('dimmed');
+        n.classList.remove('highlighted-node');
+      });
+      connections.forEach(c => {
+        c.classList.add('dimmed');
+        c.classList.remove('highlighted-conn');
+      });
+
+      // Undim and highlight target node
+      const target = svg!.querySelector(`[data-node-id="${targetId}"]`);
+      if (target) {
+        target.classList.remove('dimmed');
+        target.classList.add('highlighted-node');
+      }
+
+      // Undim and highlight connected connections and their endpoints
+      connections.forEach(c => {
+        const from = c.getAttribute('data-conn-from');
+        const to = c.getAttribute('data-conn-to');
+        if (from === targetId || to === targetId) {
+          c.classList.remove('dimmed');
+          c.classList.add('highlighted-conn');
+          // Undim the other endpoint
+          const otherId = from === targetId ? to : from;
+          const other = svg!.querySelector(`[data-node-id="${otherId}"]`);
+          if (other) other.classList.remove('dimmed');
+        }
+      });
+    }
+
+    function clearHighlight() {
+      nodes.forEach(n => {
+        n.classList.remove('dimmed', 'highlighted-node');
+      });
+      connections.forEach(c => {
+        c.classList.remove('dimmed', 'highlighted-conn');
+      });
+    }
+
+    function handleEnter(e: Event) {
+      if (lockedNodeId) return;
+      const id = (e.currentTarget as HTMLElement).getAttribute('data-node-id');
+      if (id) highlightNode(id);
+    }
+
+    function handleLeave() {
+      if (lockedNodeId) return;
+      clearHighlight();
+    }
+
+    function handleClick(e: Event) {
+      e.stopPropagation();
+      const id = (e.currentTarget as HTMLElement).getAttribute('data-node-id');
+      if (!id) return;
+      if (lockedNodeId === id) {
+        lockedNodeId = null;
+        clearHighlight();
+      } else {
+        lockedNodeId = id;
+        highlightNode(id);
+      }
+    }
+
+    // Attach listeners
+    nodes.forEach(n => {
+      n.classList.add('hoverable');
+      n.addEventListener('mouseenter', handleEnter);
+      n.addEventListener('mouseleave', handleLeave);
+      n.addEventListener('click', handleClick);
+    });
+
+    // Click on SVG background clears lock
+    function handleBgClick() {
+      if (lockedNodeId) {
+        lockedNodeId = null;
+        clearHighlight();
+      }
+    }
+    svg.addEventListener('click', handleBgClick);
+
+    return () => {
+      nodes.forEach(n => {
+        n.removeEventListener('mouseenter', handleEnter);
+        n.removeEventListener('mouseleave', handleLeave);
+        n.removeEventListener('click', handleClick);
+      });
+      svg.removeEventListener('click', handleBgClick);
+    };
+  }, [svgContent]);
 
   // Drag handling
   const handleDragStart = useCallback((e: React.MouseEvent) => {
@@ -144,56 +254,91 @@ export default function Card({ boardId, element, pos, editMode, scale, onMove, o
     <div
       ref={cardRef}
       data-element-id={element.id}
-      className="absolute rounded-lg border overflow-hidden transition-shadow duration-200"
+      className="absolute border overflow-hidden"
       style={{
         left: pos.x,
         top: pos.y,
         width: pos.w,
         height: pos.h,
         background: 'var(--bg-card)',
-        borderColor: hovered && editMode ? 'var(--accent)' : 'var(--border)',
+        borderRadius: 10,
+        borderColor: hovered ? 'var(--accent)' : 'var(--border)',
         boxShadow: hovered
-          ? '0 8px 30px rgba(0,0,0,0.3)'
-          : '0 2px 8px rgba(0,0,0,0.15)',
+          ? '0 4px 24px -4px hsl(152 65% 55% / 0.12)'
+          : '0 1px 4px rgba(0,0,0,0.1)',
         cursor: editMode ? 'grab' : 'default',
-        zIndex: hovered ? 10 : 1,
+        zIndex: hovered ? 5 : 1,
+        transition: 'box-shadow 0.15s, border-color 0.15s',
       }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); if (!editMode) setSelected(false); }}
+      onClick={(e) => {
+        if (editMode && !dragRef.current) {
+          e.stopPropagation();
+          setSelected(s => !s);
+        }
+      }}
       onMouseDown={handleDragStart}
     >
       {/* Header */}
       <div
-        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold select-none"
+        className="flex items-center justify-between select-none"
         style={{
           background: 'var(--bg-elevated)',
           borderBottom: '1px solid var(--border)',
-          color: 'var(--fg)',
+          padding: '8px 12px',
+          minHeight: 34,
         }}
       >
-        {/* Status dot */}
-        {element.status && (
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
           <span
-            className="inline-block w-2 h-2 rounded-full flex-shrink-0"
-            style={{ background: statusColor }}
-            title={element.status}
-          />
-        )}
-        <span className="truncate flex-1">{element.name}</span>
+            className="font-semibold truncate"
+            style={{ color: 'var(--fg)', fontSize: 12 }}
+          >
+            {element.name}
+          </span>
+          {element.status && (
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ background: statusColor }}
+              title={element.status}
+            />
+          )}
+        </div>
         <span
-          className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 uppercase tracking-wider"
+          className="flex-shrink-0"
           style={{
-            background: `${typeColor}22`,
-            color: typeColor,
-            border: `1px solid ${typeColor}44`,
+            fontSize: 9,
+            fontFamily: "'JetBrains Mono', monospace",
+            color: 'var(--accent)',
+            background: 'hsl(152 65% 55% / 0.08)',
+            padding: '1px 6px',
+            borderRadius: 4,
+            marginLeft: 8,
           }}
         >
-          {element.type}
+          {element.type.replace(/_/g, ' ')}
         </span>
       </div>
 
       {/* Body */}
-      <div className="p-2 overflow-hidden" style={{ height: 'calc(100% - 30px)' }}>
+      <div style={{ padding: 10, height: `calc(100% - 34px${element.description && !isNote && !isText ? ' - 20px' : ''})`, overflow: 'hidden' }}>
+        {/* Description */}
+        {element.description && !isNote && !isText && (
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--fg-muted)',
+              lineHeight: 1.5,
+              marginBottom: 8,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {element.description}
+          </div>
+        )}
         {isNote ? (
           <NoteCard
             content={element.data?.content || element.description || ''}
@@ -211,7 +356,8 @@ export default function Card({ boardId, element, pos, editMode, scale, onMove, o
           </div>
         ) : svgContent ? (
           <div
-            className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+            ref={svgRef}
+            className="svg-body"
             dangerouslySetInnerHTML={{ __html: svgContent }}
           />
         ) : (
@@ -224,8 +370,8 @@ export default function Card({ boardId, element, pos, editMode, scale, onMove, o
         )}
       </div>
 
-      {/* Resize handles */}
-      {editMode && hovered && (
+      {/* Resize handles — shown on click (selected), not hover */}
+      {editMode && selected && (
         <ResizeHandles onResizeStart={handleResizeStart} />
       )}
     </div>

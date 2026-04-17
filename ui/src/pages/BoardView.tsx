@@ -12,42 +12,85 @@ interface Props {
 }
 
 // ---- Layout constants ----
-const CARD_MIN_W = 320;
-const CARD_DEFAULT_H = 280;
+const CARD_MIN_W = 240;
+const CARD_HEADER_H = 34;
+const CARD_BODY_PAD = 20;
+const CARD_DESC_H = 20;
 const CARD_GAP = 16;
-const SECTION_PAD = 30;
-const SECTION_LABEL_H = 40;
+const SECTION_COL_GAP = 40;
+const SECTION_ROW_GAP = 50;
+const SECTION_LABEL_H = 28;
 const SECTIONS_PER_ROW = 3;
-const SECTION_GAP = 40;
+const CANVAS_PAD = 24;
 const CANVAS_MARGIN = 300;
 
+// ---- Compute card size from SVG dimensions (matches HTML renderer logic) ----
+function cardSize(el: Element, svgSizes?: Record<string, { width: number; height: number }>): { w: number; h: number } {
+  const isNote = el.type === 'note';
+  const isText = el.type === 'text' || el.type === 'text_block';
+  const isBadge = el.type === 'badge';
+
+  if (isNote) {
+    const content = (el.data as any)?.content || el.description || '';
+    const charsPerLine = 50;
+    const lines = content.split(/\n/).reduce((sum: number, l: string) => sum + Math.max(1, Math.ceil(l.length / charsPerLine)), 0);
+    const w = Math.min(520, Math.max(340, content.length * 0.6));
+    return { w, h: CARD_HEADER_H + lines * 18 + 24 };
+  }
+  if (isText) {
+    const content = (el.data as any)?.content || el.description || '';
+    const contentLines = content.split('\n');
+    const maxLineLen = Math.max(...contentLines.map((l: string) => l.length));
+    const w = Math.max(360, Math.min(600, maxLineLen * 6.5 + 40));
+    const charsPerLine = Math.floor((w - 40) / 6.5);
+    let totalLines = 0;
+    for (const line of contentLines) {
+      totalLines += Math.max(1, Math.ceil(line.length / charsPerLine));
+    }
+    return { w, h: CARD_HEADER_H + CARD_BODY_PAD + totalLines * 21 + 8 };
+  }
+  if (isBadge) return { w: CARD_MIN_W, h: 100 };
+
+  // Diagrams: use actual SVG size — no artificial cap
+  const svg = svgSizes?.[el.id];
+  if (!svg) return { w: CARD_MIN_W, h: 200 };
+
+  const descH = el.description ? CARD_DESC_H : 0;
+  return {
+    w: Math.max(CARD_MIN_W, svg.width + 20),
+    h: Math.max(100, CARD_HEADER_H + descH + svg.height + 20),
+  };
+}
+
+// ---- Card info for layout ----
+interface CardInfo {
+  element: Element;
+  section: Section;
+  w: number;
+  h: number;
+  x: number;
+  y: number;
+}
+
 // ---- Bin-packing: pack cards into rows within a section width ----
-function binPackCards(
-  elements: Element[],
-  sectionWidth: number,
-): { positions: Map<string, CardPosition>; totalHeight: number } {
-  const positions = new Map<string, CardPosition>();
-  let rowX = 0;
-  let rowY = 0;
+function binPackCards(cards: CardInfo[], sectionW: number, startX: number, startY: number): number {
+  let rowX = startX;
+  let rowY = startY;
   let rowMaxH = 0;
 
-  for (const el of elements) {
-    const w = Math.min(el.size?.width || CARD_MIN_W, sectionWidth - SECTION_PAD * 2);
-    const h = el.size?.height || CARD_DEFAULT_H;
-
-    if (rowX + w > sectionWidth - SECTION_PAD * 2 && rowX > 0) {
-      // Wrap to next row
+  for (const card of cards) {
+    if (rowX > startX && rowX + card.w > startX + sectionW) {
       rowY += rowMaxH + CARD_GAP;
-      rowX = 0;
+      rowX = startX;
       rowMaxH = 0;
     }
-
-    positions.set(el.id, { x: rowX, y: rowY, w, h });
-    rowX += w + CARD_GAP;
-    rowMaxH = Math.max(rowMaxH, h);
+    card.x = rowX;
+    card.y = rowY;
+    rowX += card.w + CARD_GAP;
+    rowMaxH = Math.max(rowMaxH, card.h);
   }
 
-  return { positions, totalHeight: rowY + rowMaxH };
+  return (rowY - startY) + rowMaxH;
 }
 
 // ---- Flatten all sections (including nested children) ----
@@ -62,7 +105,7 @@ function flattenSections(sections: Section[]): Section[] {
   return result;
 }
 
-// ---- Compute full layout ----
+// ---- Compute full layout (grid-based, matching HTML renderer) ----
 interface LayoutResult {
   items: LayoutItem[];
   sectionLabels: { title: string; category: string; x: number; y: number; w: number; h: number }[];
@@ -70,89 +113,105 @@ interface LayoutResult {
   canvasHeight: number;
 }
 
-function computeLayout(board: Board): LayoutResult {
+function computeLayout(board: Board, svgSizes: Record<string, { width: number; height: number }> = {}): LayoutResult {
   const allSections = flattenSections(board.sections).filter(s => s.elements.length > 0);
+
+  // Build card info grouped by section
+  const sectionMap = new Map<string, CardInfo[]>();
+  const sectionOrder: string[] = [];
+
+  for (const sec of allSections) {
+    const cards: CardInfo[] = [];
+    for (const el of sec.elements) {
+      const { w, h } = cardSize(el, svgSizes);
+      cards.push({ element: el, section: sec, w, h, x: 0, y: 0 });
+    }
+    sectionMap.set(sec.id, cards);
+    sectionOrder.push(sec.id);
+  }
+
+  // Step 1: Compute section widths (widest card in each) and bin-packed heights
+  const sectionWidths = new Map<string, number>();
+  const sectionHeights = new Map<string, number>();
+  for (const secId of sectionOrder) {
+    const secCards = sectionMap.get(secId)!;
+    const maxW = Math.max(...secCards.map(c => c.w));
+    sectionWidths.set(secId, maxW);
+    // Simulate bin-pack to get height
+    const clones = secCards.map(c => ({ ...c }));
+    const h = SECTION_LABEL_H + binPackCards(clones, maxW, 0, 0);
+    sectionHeights.set(secId, h);
+  }
+
+  // Step 2: Compute row widths to find widest row
+  let maxRowW = 0;
+  const rowInfos: Array<{ sections: string[]; rowW: number; rowH: number }> = [];
+  for (let i = 0; i < sectionOrder.length; i += SECTIONS_PER_ROW) {
+    const rowSections = sectionOrder.slice(i, i + SECTIONS_PER_ROW);
+    let rowW = 0;
+    let rowH = 0;
+    for (const secId of rowSections) {
+      rowW += sectionWidths.get(secId)!;
+      rowH = Math.max(rowH, sectionHeights.get(secId)!);
+    }
+    rowW += (rowSections.length - 1) * SECTION_COL_GAP;
+    maxRowW = Math.max(maxRowW, rowW);
+    rowInfos.push({ sections: rowSections, rowW, rowH });
+  }
+
+  // Step 3: Place sections — center each row
+  const canvasContentW = maxRowW;
+  let curY = CANVAS_MARGIN + CANVAS_PAD;
+
   const items: LayoutItem[] = [];
   const sectionLabels: LayoutResult['sectionLabels'] = [];
 
-  // Compute section widths
-  const sectionContentWidth = Math.max(
-    CARD_MIN_W + SECTION_PAD * 2,
-    ...allSections.map(sec => {
-      const maxCardW = Math.max(...sec.elements.map(el => el.size?.width || CARD_MIN_W));
-      return maxCardW + SECTION_PAD * 2;
-    }),
-  );
+  for (const { sections: rowSections, rowW, rowH } of rowInfos) {
+    let colX = CANVAS_MARGIN + CANVAS_PAD + (canvasContentW - rowW) / 2;
 
-  // Lay out sections in rows of SECTIONS_PER_ROW
-  const sectionBoxes: { section: Section; width: number; height: number }[] = [];
+    for (const secId of rowSections) {
+      const secCards = sectionMap.get(secId)!;
+      const secW = sectionWidths.get(secId)!;
+      const sec = secCards[0].section;
 
-  for (const sec of allSections) {
-    const { positions, totalHeight } = binPackCards(sec.elements, sectionContentWidth);
-    const h = SECTION_LABEL_H + totalHeight + SECTION_PAD * 2;
-    sectionBoxes.push({ section: sec, width: sectionContentWidth, height: h });
-  }
+      // Bin-pack cards within this section
+      binPackCards(secCards, secW, colX, curY + SECTION_LABEL_H);
 
-  // Arrange in rows of 3
-  let globalY = CANVAS_MARGIN;
-  const rows: typeof sectionBoxes[][] = [];
-  for (let i = 0; i < sectionBoxes.length; i += SECTIONS_PER_ROW) {
-    rows.push(sectionBoxes.slice(i, i + SECTIONS_PER_ROW));
-  }
-
-  let maxRowWidth = 0;
-
-  for (const row of rows) {
-    const rowWidth = row.reduce((sum, sb) => sum + sb.width, 0) + (row.length - 1) * SECTION_GAP;
-    maxRowWidth = Math.max(maxRowWidth, rowWidth);
-  }
-
-  for (const row of rows) {
-    const rowWidth = row.reduce((sum, sb) => sum + sb.width, 0) + (row.length - 1) * SECTION_GAP;
-    // Center the row
-    let rowX = CANVAS_MARGIN + (maxRowWidth - rowWidth) / 2;
-    const rowMaxH = Math.max(...row.map(sb => sb.height));
-
-    for (const sb of row) {
-      const sec = sb.section;
-
-      // Section label box
+      // Section label bounds
+      const secH = sectionHeights.get(secId)!;
       sectionLabels.push({
         title: sec.title,
         category: sec.category,
-        x: rowX,
-        y: globalY,
-        w: sb.width,
-        h: sb.height,
+        x: colX - 10,
+        y: curY - 5,
+        w: secW + 20,
+        h: secH + 15,
       });
 
-      // Pack cards inside section
-      const { positions } = binPackCards(sec.elements, sb.width);
-      for (const el of sec.elements) {
-        const cardPos = positions.get(el.id);
-        if (!cardPos) continue;
+      // Add items
+      for (const card of secCards) {
         items.push({
-          element: el,
-          section: sec,
-          pos: {
-            x: rowX + SECTION_PAD + cardPos.x,
-            y: globalY + SECTION_LABEL_H + SECTION_PAD + cardPos.y,
-            w: cardPos.w,
-            h: cardPos.h,
-          },
+          element: card.element,
+          section: card.section,
+          pos: { x: card.x, y: card.y, w: card.w, h: card.h },
         });
       }
 
-      rowX += sb.width + SECTION_GAP;
+      colX += secW + SECTION_COL_GAP;
     }
 
-    globalY += rowMaxH + SECTION_GAP;
+    curY += rowH + SECTION_ROW_GAP;
   }
 
-  const canvasWidth = maxRowWidth + CANVAS_MARGIN * 2;
-  const canvasHeight = globalY + CANVAS_MARGIN;
+  const contentW = canvasContentW + CANVAS_PAD * 2;
+  const contentH = curY + CANVAS_PAD;
 
-  return { items, sectionLabels, canvasWidth, canvasHeight };
+  return {
+    items,
+    sectionLabels,
+    canvasWidth: contentW + CANVAS_MARGIN * 2,
+    canvasHeight: contentH + CANVAS_MARGIN * 2,
+  };
 }
 
 export default function BoardView({ boardId, onBack }: Props) {
@@ -186,50 +245,88 @@ export default function BoardView({ boardId, onBack }: Props) {
   // Compute layout when board loads, then apply saved positions
   useEffect(() => {
     if (!board) return;
-    const layout = computeLayout(board);
 
-    // Try to load saved layout and override positions
-    api.loadLayout(boardId).then(res => {
-      const saved = res.data.layouts;
-      if (saved && saved.length > 0) {
-        const posMap = new Map(saved.map(l => [l.element_id, l]));
-        for (const item of layout.items) {
-          const s = posMap.get(item.element.id);
-          if (s) {
-            item.pos = { x: s.x, y: s.y, w: s.w, h: s.h };
+    async function buildLayout() {
+      // 1. Fetch SVG sizes
+      let svgSizes: Record<string, { width: number; height: number }> = {};
+      try {
+        const sizeRes = await api.getElementSizes(boardId);
+        svgSizes = sizeRes?.data?.sizes || {};
+      } catch { /* use defaults */ }
+
+      // 2. Compute layout from sizes
+      const layout = computeLayout(board, svgSizes);
+
+      // 3. Apply saved positions if any
+      try {
+        const res = await api.loadLayout(boardId);
+        const saved = res.data.layouts;
+        if (saved && saved.length > 0) {
+          const posMap = new Map(saved.map((l: any) => [l.element_id, l]));
+          for (const item of layout.items) {
+            const s = posMap.get(item.element.id);
+            if (s) item.pos = { x: s.x, y: s.y, w: s.w, h: s.h };
           }
         }
-      }
-      setLayoutItems(layout.items);
-      setSectionLabels(layout.sectionLabels);
-      setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
-    }).catch(() => {
-      // No saved layout, use computed
-      setLayoutItems(layout.items);
-      setSectionLabels(layout.sectionLabels);
-      setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
-    });
+      } catch { /* no saved layout */ }
 
-    // Fit all on initial load, then fade in
-    requestAnimationFrame(() => {
-      fitAll(layout.canvasWidth, layout.canvasHeight);
-      setTimeout(() => setCanvasVisible(true), 50);
-    });
+      // 4. Apply to state
+      setLayoutItems(layout.items);
+      setSectionLabels(layout.sectionLabels);
+      setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
+
+      // 5. Fit and reveal
+      requestAnimationFrame(() => {
+        fitAll(layout.canvasWidth, layout.canvasHeight);
+        setTimeout(() => setCanvasVisible(true), 100);
+      });
+    }
+
+    buildLayout();
   }, [board]);
 
-  // Fit all: compute scale to fit canvas in viewport
-  const fitAll = useCallback((cw?: number, ch?: number) => {
-    const w = cw || canvasSize.w;
-    const h = ch || canvasSize.h;
+  // Fit all: compute bounding box of all cards, scale to fit viewport, then center
+  const fitAll = useCallback((cw?: number, _ch?: number) => {
+    const items = layoutItems;
+
+    let minX: number, minY: number, maxX: number, maxY: number;
+    if (items.length === 0) {
+      minX = 0; minY = 0;
+      maxX = cw || canvasSize.w;
+      maxY = canvasSize.h;
+    } else {
+      minX = Infinity; minY = Infinity; maxX = 0; maxY = 0;
+      for (const item of items) {
+        minX = Math.min(minX, item.pos.x);
+        minY = Math.min(minY, item.pos.y);
+        maxX = Math.max(maxX, item.pos.x + item.pos.w);
+        maxY = Math.max(maxY, item.pos.y + item.pos.h);
+      }
+    }
+
+    const PAD = 40;
+    const contentW = maxX - minX + PAD * 2;
+    const contentH = maxY - minY + PAD * 2;
     const vw = window.innerWidth;
-    const vh = window.innerHeight - 48; // toolbar height
-    const s = Math.min(vw / w, vh / h, 1);
-    setScale(Math.max(0.1, Math.round(s * 100) / 100));
-  }, [canvasSize]);
+    const vh = window.innerHeight - 44;
+    const s = Math.max(0.15, Math.min(vw / contentW, vh / contentH, 1));
+    const newScale = Math.round(s * 100) / 100;
+    setScale(newScale);
+
+    // Center the content in the viewport after scale is applied
+    requestAnimationFrame(() => {
+      const wrapper = document.querySelector('.flex-1.overflow-auto') as HTMLElement;
+      if (!wrapper) return;
+      const centerX = (minX - PAD + contentW / 2) * newScale;
+      const centerY = (minY - PAD + contentH / 2) * newScale;
+      wrapper.scrollLeft = centerX - vw / 2;
+      wrapper.scrollTop = centerY - vh / 2;
+    });
+  }, [canvasSize, layoutItems]);
 
   // Zoom
-  const zoomIn = useCallback(() => setScale(s => Math.min(3, Math.round((s + 0.1) * 100) / 100)), []);
-  const zoomOut = useCallback(() => setScale(s => Math.max(0.1, Math.round((s - 0.1) * 100) / 100)), []);
+  const zoomIn = useCallback(() => setScale(s => Math.min(3, Math.round(s * 1.2 * 100) / 100)), []);
+  const zoomOut = useCallback(() => setScale(s => Math.max(0.15, Math.round(s / 1.2 * 100) / 100)), []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -275,6 +372,13 @@ export default function BoardView({ boardId, onBack }: Props) {
   const handleUpdatePosition = useCallback((id: string, x: number, y: number) => {
     setLayoutItems(prev => prev.map(item =>
       item.element.id === id ? { ...item, pos: { ...item.pos, x, y } } : item
+    ));
+  }, []);
+
+  // Update section label position (drag)
+  const handleUpdateSectionPos = useCallback((index: number, x: number, y: number) => {
+    setSectionLabels(prev => prev.map((sec, i) =>
+      i === index ? { ...sec, x, y } : sec
     ));
   }, []);
 
@@ -351,9 +455,11 @@ export default function BoardView({ boardId, onBack }: Props) {
       <Toolbar
         title={board.name}
         subtitle={board.description}
+        version={board.version}
         scale={scale}
         editMode={editMode}
         theme={theme}
+        onBack={onBack}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onFitAll={() => fitAll()}
@@ -375,6 +481,8 @@ export default function BoardView({ boardId, onBack }: Props) {
         visible={canvasVisible}
         onUpdatePosition={handleUpdatePosition}
         onUpdateSize={handleUpdateSize}
+        onUpdateSectionPos={handleUpdateSectionPos}
+        onZoom={setScale}
         scrollToRef={scrollToRef}
       />
 

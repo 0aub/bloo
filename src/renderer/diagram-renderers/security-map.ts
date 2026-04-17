@@ -29,8 +29,16 @@ function getLayerColor(level: number, maxLevel: number): { fill: string; border:
 
 export function render(element: Element): string {
   const data = element.data as SecurityLayerMapData;
-  const { layers, flows } = data;
+  const rawLayers = data.layers || [];
+  const flows = data.flows || [];
   const size = calculateSize(element);
+
+  // Normalize layers: assign level/id if missing
+  const layers = rawLayers.map((l: any, i: number) => ({
+    ...l,
+    id: l.id || `layer_${i}`,
+    level: l.level ?? i,
+  }));
 
   const parts: string[] = [];
 
@@ -59,7 +67,7 @@ export function render(element: Element): string {
   const diagramTop = PAD + 36;
 
   // Sort layers by level ascending (0 = outermost)
-  const sorted = [...layers].sort((a, b) => a.level - b.level);
+  const sorted = [...layers].sort((a: any, b: any) => a.level - b.level);
   const maxLevel = sorted.length > 0 ? sorted[sorted.length - 1].level : 0;
 
   // Center point
@@ -178,7 +186,7 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as SecurityLayerMapData;
-  const { layers } = data;
+  const layers = data.layers || [];
 
   const layerCount = layers.length || 1;
   const innerMin = MIN_INNER_SIZE;

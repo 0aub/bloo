@@ -44,7 +44,8 @@ function envCardHeight(serviceCount: number, hasDb: boolean, hasNotes: boolean):
 
 export function render(element: Element): string {
   const data = element.data as EnvironmentMapData;
-  const { environments, promotions } = data;
+  const environments = data.environments || [];
+  const promotions = data.promotions || [];
   const size = calculateSize(element);
 
   const parts: string[] = [];
@@ -75,7 +76,7 @@ export function render(element: Element): string {
 
   // Compute max card height for alignment
   const maxH = environments.length > 0
-    ? Math.max(...environments.map(e => envCardHeight(e.services.length, !!e.database, !!e.notes)))
+    ? Math.max(...environments.map(e => envCardHeight((e.services || []).length, !!e.database, !!e.notes)))
     : 100;
   const centerY = flowTop + maxH / 2;
 
@@ -86,8 +87,8 @@ export function render(element: Element): string {
   const CHAR_W = 6.5;
   const envWidthMap = new Map<string, number>();
   for (const env of environments) {
-    const nameW = env.name.length * (CHAR_W + 1) + ENV_PAD_X * 2;
-    const svcWs = env.services.map(s => s.name.length * CHAR_W + ENV_PAD_X * 2 + 16 + (s.replicas ? 30 : 0));
+    const nameW = (env.name || '').length * (CHAR_W + 1) + ENV_PAD_X * 2;
+    const svcWs = (env.services || []).map(s => (s.name || '').length * CHAR_W + ENV_PAD_X * 2 + 16 + (s.replicas ? 30 : 0));
     const dbW = env.database ? env.database.length * CHAR_W + 30 : 0;
     const urlW = env.url ? env.url.length * 5.5 + ENV_PAD_X * 2 : 0;
     const infraW = env.infrastructure ? env.infrastructure.length * 5.5 + ENV_PAD_X * 2 : 0;
@@ -97,7 +98,7 @@ export function render(element: Element): string {
   let envX = PAD;
   for (const env of environments) {
     const tc = getEnvTierColor(env.name);
-    const cardH = envCardHeight(env.services.length, !!env.database, !!env.notes);
+    const cardH = envCardHeight((env.services || []).length, !!env.database, !!env.notes);
     const cardY = centerY - cardH / 2;
     const EW = envWidthMap.get(env.id) || MIN_ENV_WIDTH;
 
@@ -156,7 +157,7 @@ export function render(element: Element): string {
 
     // Services
     let sy = cardY + ENV_PAD_TOP;
-    for (const svc of env.services) {
+    for (const svc of env.services || []) {
       parts.push(roundedRect(envX + ENV_PAD_X, sy, EW - ENV_PAD_X * 2, SERVICE_HEIGHT, 3, {
         fill: 'hsl(160 10% 10%)',
         stroke: 'hsl(160 8% 18%)',
@@ -243,16 +244,16 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as EnvironmentMapData;
-  const { environments } = data;
+  const environments = data.environments || [];
 
   const maxH = environments.length > 0
-    ? Math.max(...environments.map(e => envCardHeight(e.services.length, !!e.database, !!e.notes)))
+    ? Math.max(...environments.map(e => envCardHeight((e.services || []).length, !!e.database, !!e.notes)))
     : 100;
 
   const CW = 6.5;
   const envWs = environments.map(env => {
-    const nameW = env.name.length * (CW + 1) + ENV_PAD_X * 2;
-    const svcWs = env.services.map(s => s.name.length * CW + ENV_PAD_X * 2 + 16);
+    const nameW = (env.name || '').length * (CW + 1) + ENV_PAD_X * 2;
+    const svcWs = (env.services || []).map(s => (s.name || '').length * CW + ENV_PAD_X * 2 + 16);
     const dbW = env.database ? env.database.length * CW + 30 : 0;
     return Math.max(MIN_ENV_WIDTH, nameW, Math.max(0, ...svcWs), dbW);
   });

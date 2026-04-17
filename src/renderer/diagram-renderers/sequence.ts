@@ -44,9 +44,9 @@ const COL_BG = 'hsl(160 10% 10%)';
 const COL_CARD_BG = 'hsl(160 10% 10%)';
 const COL_TEXT = 'hsl(0 0% 95%)';
 const COL_MUTED = 'hsl(155 5% 55%)';
-const COL_BORDER = 'hsl(160 8% 18%)';
+const COL_BORDER = 'hsl(160 8% 25%)';
 const COL_ACCENT = 'hsl(152 65% 55%)';
-const COL_CONN = 'hsl(155 5% 35%)';
+const COL_CONN = 'hsl(155 5% 45%)';
 const COL_NOTE_BG = 'hsl(38 50% 15%)';
 const COL_NOTE_BORDER = 'hsl(38 70% 45%)';
 const COL_NOTE_TEXT = 'hsl(38 60% 70%)';
@@ -255,7 +255,8 @@ function renderMessage(
 
 // ── Layout ───────────────────────────────────────────────────────────────────
 
-function measureTextWidth(s: string, fontSize: number): number {
+function measureTextWidth(s: string | undefined | null, fontSize: number): number {
+  if (!s) return 0;
   return s.length * fontSize * 0.58;
 }
 

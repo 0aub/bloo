@@ -43,9 +43,9 @@ const COL_BG = 'hsl(160 10% 10%)';
 const COL_CARD_BG = 'hsl(160 10% 10%)';
 const COL_TEXT = 'hsl(0 0% 95%)';
 const COL_MUTED = 'hsl(155 5% 55%)';
-const COL_BORDER = 'hsl(160 8% 18%)';
+const COL_BORDER = 'hsl(160 8% 25%)';
 const COL_ACCENT = 'hsl(152 65% 55%)';
-const COL_CONN = 'hsl(155 5% 35%)';
+const COL_CONN = 'hsl(155 5% 45%)';
 const COL_HEADER_BG = 'hsl(160 8% 13%)';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -64,21 +64,22 @@ function measureText(s: string, fontSize: number): number {
 }
 
 function tableSize(t: DbTable): { w: number; h: number } {
-  const nameW = measureText(t.name, TITLE_SIZE) + TABLE_PAD * 2 + 20;
+  const nameW = measureText(t.name || '', TITLE_SIZE) + TABLE_PAD * 2 + 20;
   let maxColW = 0;
-  for (const col of t.columns) {
-    const colText = `${col.primary_key ? '🔑 ' : ''}${col.name}  ${col.type}`;
+  for (const col of t.columns || []) {
+    const colText = `${col.primary_key ? '🔑 ' : ''}${col.name || ''}  ${col.type || ''}`;
     maxColW = Math.max(maxColW, measureText(colText, BODY_SIZE));
   }
   const w = Math.max(TABLE_MIN_W, maxColW + TABLE_PAD * 2 + 16);
-  const h = HEADER_H + t.columns.length * ROW_H + 4;
+  const h = HEADER_H + (t.columns || []).length * ROW_H + 4;
   return { w, h };
 }
 
 // ── Table card rendering ─────────────────────────────────────────────────────
 
 function renderTable(tl: TableLayout): string {
-  const { table, x, y, w, h } = tl;
+  const { table: _table, x, y, w, h } = tl;
+  const table = { ..._table, id: _table.id || '', name: _table.name || '', schema: _table.schema || '', columns: _table.columns || [] };
   const parts: string[] = [];
 
   // Card background
@@ -158,7 +159,7 @@ function renderTable(tl: TableLayout): string {
     );
 
     // Column type (right-aligned)
-    const typeStr = col.type + (col.nullable ? '?' : '') + (col.unique ? ' (U)' : '');
+    const typeStr = (col.type || '') + (col.nullable ? '?' : '') + (col.unique ? ' (U)' : '');
     parts.push(
       text(x + w - TABLE_PAD, midY, typeStr, {
         fill: COL_MUTED,
@@ -172,7 +173,7 @@ function renderTable(tl: TableLayout): string {
     rowY += ROW_H;
   }
 
-  return group(parts, undefined, { 'data-node-id': tl.table.id });
+  return group(parts, undefined, { 'data-node-id': table.id });
 }
 
 // ── Crow's foot relationship rendering ───────────────────────────────────────

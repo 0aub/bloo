@@ -333,10 +333,14 @@ export interface ImageData {
 
 // --- Badge ---
 
-export interface BadgeData {
+export interface BadgeItem {
   label: string;
   color?: string;
   icon?: string;
+}
+
+export interface BadgeData {
+  badges: BadgeItem[];
   attached_to?: string;
 }
 

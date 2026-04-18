@@ -265,9 +265,11 @@ const imageDataSchema = z.object({
 });
 
 const badgeDataSchema = z.object({
-  label: z.string(),
-  color: z.string().optional(),
-  icon: z.string().optional(),
+  badges: z.array(z.object({
+    label: z.string(),
+    color: z.string().optional(),
+    icon: z.string().optional(),
+  })),
   attached_to: z.string().optional(),
 });
 

@@ -110,8 +110,27 @@ interface LayoutResult {
   canvasHeight: number;
 }
 
+// Preferred section ordering: project_meta first, then by category
+const CATEGORY_ORDER: Record<string, number> = {
+  project_meta: 0,
+  system_structure: 1,
+  data_layer: 2,
+  api_integration: 3,
+  security: 4,
+  infrastructure: 5,
+  processes: 6,
+  user_flows: 7,
+};
+
 function computeLayout(board: Board, svgSizes: Record<string, { width: number; height: number }> = {}): LayoutResult {
   const allSections = flattenSections(board.sections).filter(s => s.elements.length > 0);
+
+  // Sort sections: project_meta first, then by category order
+  allSections.sort((a, b) => {
+    const oa = CATEGORY_ORDER[a.category] ?? 99;
+    const ob = CATEGORY_ORDER[b.category] ?? 99;
+    return oa - ob;
+  });
 
   // Build card info grouped by section
   const sectionMap = new Map<string, CardInfo[]>();
@@ -127,16 +146,18 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
     sectionOrder.push(sec.id);
   }
 
-  // Step 1: Compute section widths (widest card in each) and bin-packed heights
+  // Step 1: Compute section widths — sum of all cards + gaps (horizontal layout)
+  // Then bin-pack within that width to get height
   const sectionWidths = new Map<string, number>();
   const sectionHeights = new Map<string, number>();
   for (const secId of sectionOrder) {
     const secCards = sectionMap.get(secId)!;
-    const maxW = Math.max(...secCards.map(c => c.w));
-    sectionWidths.set(secId, maxW);
+    // Section width = total of all card widths + gaps between them
+    const totalW = secCards.reduce((sum, c) => sum + c.w, 0) + (secCards.length - 1) * CARD_GAP;
+    sectionWidths.set(secId, totalW);
     // Simulate bin-pack to get height
     const clones = secCards.map(c => ({ ...c }));
-    const h = SECTION_LABEL_H + binPackCards(clones, maxW, 0, 0);
+    const h = SECTION_LABEL_H + binPackCards(clones, totalW, 0, 0);
     sectionHeights.set(secId, h);
   }
 

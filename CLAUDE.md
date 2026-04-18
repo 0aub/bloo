@@ -108,11 +108,11 @@ Content supports markdown: `## headers`, `**bold**`, `*italic*`, `` `code` ``, `
 { "content": "## Overview\n\nThis service handles **authentication** and...\n\n- JWT tokens\n- OAuth2 flow" }
 ```
 
-### badge (multiple badges)
+### badge
 ```json
 { "badges": [{ "label": "Python 3.12", "color": "blue" }, { "label": "Docker", "color": "#2496ED" }] }
 ```
-Colors: green, blue, red, yellow, orange, purple, pink, or any hex color.
+`badges` is an array of `{ label, color?, icon? }`. Colors: green, blue, red, yellow, orange, purple, pink, or any hex color.
 
 ## Best Practices
 - Always provide a `reason` for changes (builds the changelog)

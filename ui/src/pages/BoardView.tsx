@@ -20,7 +20,7 @@ const CARD_GAP = 16;
 const SECTION_COL_GAP = 40;
 const SECTION_ROW_GAP = 50;
 const SECTION_LABEL_H = 28;
-const SECTIONS_PER_ROW = 3;
+const SECTIONS_PER_ROW = 2;
 const CANVAS_PAD = 24;
 const CANVAS_MARGIN = 300;
 
@@ -146,18 +146,25 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
     sectionOrder.push(sec.id);
   }
 
-  // Step 1: Compute section widths — sum of all cards + gaps (horizontal layout)
-  // Then bin-pack within that width to get height
+  // Step 1: Compute section widths and bin-pack heights
+  // Width = enough to fit the 2 widest cards side by side (or all if ≤2 cards)
   const sectionWidths = new Map<string, number>();
   const sectionHeights = new Map<string, number>();
   for (const secId of sectionOrder) {
     const secCards = sectionMap.get(secId)!;
-    // Section width = total of all card widths + gaps between them
-    const totalW = secCards.reduce((sum, c) => sum + c.w, 0) + (secCards.length - 1) * CARD_GAP;
-    sectionWidths.set(secId, totalW);
+    const widths = secCards.map(c => c.w).sort((a, b) => b - a); // descending
+    let secW: number;
+    if (widths.length <= 2) {
+      // 1-2 cards: fit them all side by side
+      secW = widths.reduce((s, w) => s + w, 0) + (widths.length - 1) * CARD_GAP;
+    } else {
+      // 3+ cards: width = two widest cards side by side
+      secW = widths[0] + widths[1] + CARD_GAP;
+    }
+    sectionWidths.set(secId, secW);
     // Simulate bin-pack to get height
     const clones = secCards.map(c => ({ ...c }));
-    const h = SECTION_LABEL_H + binPackCards(clones, totalW, 0, 0);
+    const h = SECTION_LABEL_H + binPackCards(clones, secW, 0, 0);
     sectionHeights.set(secId, h);
   }
 

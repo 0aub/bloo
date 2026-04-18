@@ -26,44 +26,24 @@ function resolveColor(color?: string): { bg: string; text: string } {
   return { bg: color, text: 'hsl(0 0% 95%)' };
 }
 
-interface BadgeItem {
-  label: string;
-  color?: string;
-  icon?: string;
-}
+export function render(element: Element): string {
+  const data = element.data as BadgeData;
+  const label = data.label || '';
+  const iconStr = data.icon ? `${data.icon} ` : '';
+  const fullLabel = iconStr + label;
+  const colors = resolveColor(data.color);
 
-const BADGE_GAP = 8;
-const ROW_GAP = 8;
-const MAX_ROW_WIDTH = 500;
-
-function resolveBadges(data: any): BadgeItem[] {
-  // Handle array format: data.badges = [{ label, color, icon }, ...]
-  if (Array.isArray(data.badges) && data.badges.length > 0) return data.badges;
-  // Handle single badge format: data.label, data.color, data.icon
-  if (data.label) return [{ label: data.label, color: data.color, icon: data.icon }];
-  return [];
-}
-
-function badgeWidth(badge: BadgeItem): number {
-  const iconStr = badge.icon ? `${badge.icon} ` : '';
-  const fullLabel = iconStr + (badge.label || '');
-  return fullLabel.length * CHAR_WIDTH + H_PADDING * 2;
-}
-
-function renderSingleBadge(badge: BadgeItem, x: number, y: number): string {
-  const colors = resolveColor(badge.color);
-  const iconStr = badge.icon ? `${badge.icon} ` : '';
-  const fullLabel = iconStr + (badge.label || '');
-  const w = badgeWidth(badge);
+  const textWidth = fullLabel.length * CHAR_WIDTH;
+  const w = textWidth + H_PADDING * 2;
 
   const parts: string[] = [];
-  parts.push(roundedRect(x, y, w, PILL_HEIGHT, PILL_RADIUS, {
+  parts.push(roundedRect(0, 0, w, PILL_HEIGHT, PILL_RADIUS, {
     fill: colors.bg,
     stroke: colors.text,
     'stroke-width': 1,
     'stroke-opacity': 0.4,
   }));
-  parts.push(text(x + w / 2, y + PILL_HEIGHT / 2 + 1, fullLabel, {
+  parts.push(text(w / 2, PILL_HEIGHT / 2 + 1, fullLabel, {
     fill: colors.text,
     'font-size': 10,
     'font-weight': 600,
@@ -74,50 +54,11 @@ function renderSingleBadge(badge: BadgeItem, x: number, y: number): string {
   return group(parts);
 }
 
-export function render(element: Element): string {
-  const data = element.data as BadgeData;
-  const badges = resolveBadges(data);
-  if (badges.length === 0) {
-    return group([text(H_PADDING, PILL_HEIGHT / 2, 'No badges', {
-      fill: 'hsl(155 5% 55%)',
-      'font-size': 10,
-      'font-family': FONT_FAMILY,
-      'dominant-baseline': 'middle',
-    })]);
-  }
-
-  const parts: string[] = [];
-  let x = 0;
-  let y = 0;
-  for (const badge of badges) {
-    const w = badgeWidth(badge);
-    if (x > 0 && x + w > MAX_ROW_WIDTH) {
-      x = 0;
-      y += PILL_HEIGHT + ROW_GAP;
-    }
-    parts.push(renderSingleBadge(badge, x, y));
-    x += w + BADGE_GAP;
-  }
-
-  return group(parts);
-}
-
 export function calculateSize(element: Element): Size {
   const data = element.data as BadgeData;
-  const badges = resolveBadges(data);
-  if (badges.length === 0) return { width: 100, height: PILL_HEIGHT };
-
-  let x = 0;
-  let y = 0;
-  let maxX = 0;
-  for (const badge of badges) {
-    const w = badgeWidth(badge);
-    if (x > 0 && x + w > MAX_ROW_WIDTH) {
-      x = 0;
-      y += PILL_HEIGHT + ROW_GAP;
-    }
-    x += w + BADGE_GAP;
-    maxX = Math.max(maxX, x - BADGE_GAP);
-  }
-  return { width: maxX, height: y + PILL_HEIGHT };
+  const label = data.label || '';
+  const iconStr = data.icon ? `${data.icon} ` : '';
+  const fullLabel = iconStr + label;
+  const width = fullLabel.length * CHAR_WIDTH + H_PADDING * 2;
+  return { width, height: PILL_HEIGHT };
 }

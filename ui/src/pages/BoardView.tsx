@@ -11,17 +11,16 @@ interface Props {
   onBack: () => void;
 }
 
-// ---- Layout constants ----
+// ---- Layout constants (matching HTML renderer exactly) ----
 const CARD_MIN_W = 240;
 const CARD_HEADER_H = 34;
-const CARD_BODY_PAD = 20;
 const CARD_DESC_H = 20;
 const CARD_GAP = 16;
 const SECTION_COL_GAP = 40;
 const SECTION_ROW_GAP = 50;
 const SECTION_LABEL_H = 28;
-const SECTIONS_PER_ROW = 2;
-const CANVAS_PAD = 24;
+const SECTIONS_PER_ROW = 3;
+const PAD = 24;
 const CANVAS_MARGIN = 300;
 
 // ---- Compute card size from SVG dimensions (matches HTML renderer logic) ----
@@ -126,15 +125,12 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
   const allSections = flattenSections(board.sections).filter(s => s.elements.length > 0);
 
   // Sort sections: project_meta first, then by category order
-  allSections.sort((a, b) => {
-    const oa = CATEGORY_ORDER[a.category] ?? 99;
-    const ob = CATEGORY_ORDER[b.category] ?? 99;
-    return oa - ob;
-  });
+  allSections.sort((a, b) => (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99));
 
-  // Build card info grouped by section
+  // Build card info grouped by section (direct port of HTML renderer autoLayout)
   const sectionMap = new Map<string, CardInfo[]>();
   const sectionOrder: string[] = [];
+  const sectionMeta = new Map<string, Section>();
 
   for (const sec of allSections) {
     const cards: CardInfo[] = [];
@@ -144,27 +140,18 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
     }
     sectionMap.set(sec.id, cards);
     sectionOrder.push(sec.id);
+    sectionMeta.set(sec.id, sec);
   }
 
-  // Step 1: Compute section widths and bin-pack heights
-  // Width = enough to fit the 2 widest cards side by side (or all if ≤2 cards)
+  // Step 1: Section width = widest card. Bin-pack to get height.
   const sectionWidths = new Map<string, number>();
   const sectionHeights = new Map<string, number>();
   for (const secId of sectionOrder) {
     const secCards = sectionMap.get(secId)!;
-    const widths = secCards.map(c => c.w).sort((a, b) => b - a); // descending
-    let secW: number;
-    if (widths.length <= 2) {
-      // 1-2 cards: fit them all side by side
-      secW = widths.reduce((s, w) => s + w, 0) + (widths.length - 1) * CARD_GAP;
-    } else {
-      // 3+ cards: width = two widest cards side by side
-      secW = widths[0] + widths[1] + CARD_GAP;
-    }
-    sectionWidths.set(secId, secW);
-    // Simulate bin-pack to get height
+    const maxW = Math.max(...secCards.map(c => c.w));
+    sectionWidths.set(secId, maxW);
     const clones = secCards.map(c => ({ ...c }));
-    const h = SECTION_LABEL_H + binPackCards(clones, secW, 0, 0);
+    const h = SECTION_LABEL_H + binPackCards(clones, maxW, 0, 0);
     sectionHeights.set(secId, h);
   }
 
@@ -184,48 +171,41 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
     rowInfos.push({ sections: rowSections, rowW, rowH });
   }
 
-  // Step 3: Place sections — center each row
+  // Step 3: Place sections — center each row within widest row width
   const canvasContentW = maxRowW;
-  let curY = CANVAS_MARGIN + CANVAS_PAD;
+  let curY = PAD;
 
   const items: LayoutItem[] = [];
   const sectionLabels: LayoutResult['sectionLabels'] = [];
 
   for (const { sections: rowSections, rowW, rowH } of rowInfos) {
-    let colX = CANVAS_MARGIN + CANVAS_PAD + (canvasContentW - rowW) / 2;
+    let colX = PAD + (canvasContentW - rowW) / 2;
 
     for (const secId of rowSections) {
       const secCards = sectionMap.get(secId)!;
       const secW = sectionWidths.get(secId)!;
-      const sec = secCards[0].section;
+      const sec = sectionMeta.get(secId)!;
 
       // Bin-pack cards within this section
       binPackCards(secCards, secW, colX, curY + SECTION_LABEL_H);
 
-      // Add items and compute actual bounds from placed cards
-      let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+      // Add items
       for (const card of secCards) {
         items.push({
           element: card.element,
           section: card.section,
           pos: { x: card.x, y: card.y, w: card.w, h: card.h },
         });
-        minX = Math.min(minX, card.x);
-        minY = Math.min(minY, card.y);
-        maxX = Math.max(maxX, card.x + card.w);
-        maxY = Math.max(maxY, card.y + card.h);
       }
 
-      // Section label bounds — computed from actual card positions
-      const PAD_X = 16;
-      const PAD_BOTTOM = 16;
+      // Section label bounds — use section width and computed height
       sectionLabels.push({
         title: sec.title,
         category: sec.category,
-        x: minX - PAD_X,
+        x: colX - 10,
         y: curY - 5,
-        w: (maxX - minX) + PAD_X * 2,
-        h: (maxY - curY) + PAD_BOTTOM + 5,
+        w: secW + 20,
+        h: sectionHeights.get(secId)! + 15,
       });
 
       colX += secW + SECTION_COL_GAP;
@@ -234,8 +214,19 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
     curY += rowH + SECTION_ROW_GAP;
   }
 
-  const contentW = canvasContentW + CANVAS_PAD * 2;
-  const contentH = curY + CANVAS_PAD;
+  // Add margins and compute canvas size
+  const contentW = canvasContentW + PAD * 2;
+  const contentH = curY + PAD;
+
+  // Shift all cards and labels by margin offset
+  for (const item of items) {
+    item.pos.x += CANVAS_MARGIN;
+    item.pos.y += CANVAS_MARGIN;
+  }
+  for (const label of sectionLabels) {
+    label.x += CANVAS_MARGIN;
+    label.y += CANVAS_MARGIN;
+  }
 
   return {
     items,

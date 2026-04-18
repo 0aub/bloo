@@ -92,6 +92,8 @@ svg .highlighted-node { filter: drop-shadow(0 0 8px var(--accent)) brightness(1.
 .light [data-element-id] svg [stroke="hsl(160 8% 25%)"] { stroke: hsl(150 8% 78%); }
 .light [data-element-id] svg [stroke="hsl(160 10% 30%)"] { stroke: hsl(150 10% 75%); }
 .light [data-element-id] svg [fill="hsl(160 8% 15%)"] { fill: hsl(150 6% 94%); }
+.light [data-element-id] svg [fill="hsl(160 8% 18%)"] { fill: hsl(150 6% 93%); }
+.light [data-element-id] svg [fill="hsl(160 8% 14%)"] { fill: hsl(150 6% 95%); }
 .light [data-element-id] svg [fill="hsl(155 5% 45%)"] { fill: hsl(155 10% 55%); }
 .light [data-element-id] svg [stroke="hsl(155 5% 45%)"] { stroke: hsl(155 10% 55%); }
 .light [data-element-id] svg [fill="hsl(155 8% 50%)"] { fill: hsl(155 12% 50%); }

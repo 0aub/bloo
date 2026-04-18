@@ -1,5 +1,5 @@
 import type { Element, Size } from '../../models/board.js';
-import type { PageMapData } from '../../models/elements.js';
+import type { PageMapData, PageEntry } from '../../models/elements.js';
 import { escapeHtml, roundedRect, rect, text, group, path, defs, marker, line } from './svg-builder.js';
 
 const FONT = "'Almarai','Inter',sans-serif";
@@ -38,9 +38,23 @@ function getPageCenter(index: number): { cx: number; cy: number } {
   return { cx: x + PAGE_WIDTH / 2, cy: y + PAGE_HEIGHT / 2 };
 }
 
+// Normalize page fields: Claude sends `path` but interface expects `route`
+function normalizePages(pages: any[]): PageEntry[] {
+  return pages.map((p, i) => ({
+    id: p.id || p.name?.toLowerCase().replace(/\s+/g, '_') || `page_${i}`,
+    name: p.name || p.title || 'Page',
+    route: p.route || p.path || '/',
+    description: p.description,
+    type: p.type || 'page',
+    auth_required: p.auth_required ?? p.authRequired ?? false,
+    roles: p.roles || [],
+    components: p.components || [],
+  }));
+}
+
 export function render(element: Element): string {
   const data = element.data as PageMapData;
-  const pages = data.pages || [];
+  const pages = normalizePages(data.pages || []);
   const navigations = data.navigations || [];
   const size = calculateSize(element);
 

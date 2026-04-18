@@ -1,5 +1,5 @@
 import type { Element, Size } from '../../models/board.js';
-import type { PageMapData, PageEntry } from '../../models/elements.js';
+import type { PageMapData, PageEntry, PageNavigation } from '../../models/elements.js';
 import { escapeHtml, roundedRect, rect, text, group, path, defs, marker, line } from './svg-builder.js';
 
 const FONT = "'Almarai','Inter',sans-serif";
@@ -52,10 +52,37 @@ function normalizePages(pages: any[]): PageEntry[] {
   }));
 }
 
+// Infer navigations when Claude doesn't provide them:
+// Connect parent routes to child routes (e.g., /articles → /articles/:id)
+// Connect login/auth pages to home/dashboard
+function inferNavigations(pages: PageEntry[]): PageNavigation[] {
+  const navs: PageNavigation[] = [];
+
+  for (let i = 0; i < pages.length; i++) {
+    const from = pages[i];
+    for (let j = 0; j < pages.length; j++) {
+      if (i === j) continue;
+      const to = pages[j];
+      // Parent route → child route (e.g., /articles → /articles/:id)
+      if (to.route.startsWith(from.route + '/') && from.route !== '/') {
+        navs.push({ from: from.id, to: to.id, trigger: 'navigate' });
+      }
+    }
+    // Login → home/dashboard
+    if (from.route === '/login' || from.route === '/auth') {
+      const home = pages.find(p => p.route === '/' || p.route === '/dashboard');
+      if (home) navs.push({ from: from.id, to: home.id, trigger: 'login', condition: 'authenticated' });
+    }
+  }
+  return navs;
+}
+
 export function render(element: Element): string {
   const data = element.data as PageMapData;
   const pages = normalizePages(data.pages || []);
-  const navigations = data.navigations || [];
+  const navigations = (data.navigations && data.navigations.length > 0)
+    ? data.navigations
+    : inferNavigations(pages);
   const size = calculateSize(element);
 
   const parts: string[] = [];

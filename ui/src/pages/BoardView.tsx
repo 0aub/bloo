@@ -30,24 +30,21 @@ function cardSize(el: Element, svgSizes?: Record<string, { width: number; height
   const isText = el.type === 'text' || el.type === 'text_block';
   const isBadge = el.type === 'badge';
 
-  if (isNote) {
-    const content = (el.data as any)?.content || el.description || '';
-    const charsPerLine = 50;
-    const lines = content.split(/\n/).reduce((sum: number, l: string) => sum + Math.max(1, Math.ceil(l.length / charsPerLine)), 0);
-    const w = Math.min(520, Math.max(340, content.length * 0.6));
-    return { w, h: CARD_HEADER_H + lines * 18 + 24 };
-  }
-  if (isText) {
+  if (isNote || isText) {
     const content = (el.data as any)?.content || el.description || '';
     const contentLines = content.split('\n');
     const maxLineLen = Math.max(...contentLines.map((l: string) => l.length));
-    const w = Math.max(360, Math.min(600, maxLineLen * 6.5 + 40));
-    const charsPerLine = Math.floor((w - 40) / 6.5);
+    const w = Math.max(360, Math.min(580, maxLineLen * 6.2 + 60));
+    const charsPerLine = Math.floor((w - 40) / 6.2);
     let totalLines = 0;
-    for (const line of contentLines) {
-      totalLines += Math.max(1, Math.ceil(line.length / charsPerLine));
+    for (const ln of contentLines) {
+      if (ln.trim() === '') { totalLines += 0.4; continue; }
+      // Headers take ~1.5 lines of space
+      if (ln.match(/^#{1,3}\s/)) { totalLines += 1.5; continue; }
+      totalLines += Math.max(1, Math.ceil(ln.length / charsPerLine));
     }
-    return { w, h: CARD_HEADER_H + CARD_BODY_PAD + totalLines * 21 + 8 };
+    const h = CARD_HEADER_H + Math.ceil(totalLines) * 18 + 30;
+    return { w, h };
   }
   if (isBadge) return { w: CARD_MIN_W, h: 100 };
 

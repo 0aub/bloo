@@ -99,14 +99,14 @@ svg .highlighted-node { filter: drop-shadow(0 0 8px var(--accent)) brightness(1.
 .light [data-element-id] svg [fill="hsl(155 8% 50%)"] { fill: hsl(155 12% 50%); }
 .light [data-element-id] svg [stroke="hsl(155 8% 50%)"] { stroke: hsl(155 12% 50%); }
 /* Page map fills */
-.light [data-element-id] svg [fill="hsl(200 35% 18%)"] { fill: hsl(200 35% 92%); }
-.light [data-element-id] svg [fill="hsl(200 40% 24%)"] { fill: hsl(200 35% 88%); }
-.light [data-element-id] svg [fill="hsl(280 25% 18%)"] { fill: hsl(280 25% 93%); }
-.light [data-element-id] svg [fill="hsl(280 30% 24%)"] { fill: hsl(280 25% 88%); }
-.light [data-element-id] svg [fill="hsl(35 35% 18%)"] { fill: hsl(35 35% 93%); }
-.light [data-element-id] svg [fill="hsl(35 40% 24%)"] { fill: hsl(35 35% 88%); }
-.light [data-element-id] svg [fill="hsl(180 25% 18%)"] { fill: hsl(180 25% 92%); }
-.light [data-element-id] svg [fill="hsl(180 30% 24%)"] { fill: hsl(180 25% 88%); }
+.light [data-element-id] svg [fill="hsl(200 30% 22%)"] { fill: hsl(200 30% 92%); }
+.light [data-element-id] svg [fill="hsl(200 35% 28%)"] { fill: hsl(200 30% 86%); }
+.light [data-element-id] svg [fill="hsl(280 25% 22%)"] { fill: hsl(280 20% 93%); }
+.light [data-element-id] svg [fill="hsl(280 30% 28%)"] { fill: hsl(280 25% 87%); }
+.light [data-element-id] svg [fill="hsl(35 30% 22%)"] { fill: hsl(35 30% 93%); }
+.light [data-element-id] svg [fill="hsl(35 35% 28%)"] { fill: hsl(35 30% 87%); }
+.light [data-element-id] svg [fill="hsl(180 25% 22%)"] { fill: hsl(180 20% 92%); }
+.light [data-element-id] svg [fill="hsl(180 30% 28%)"] { fill: hsl(180 25% 87%); }
 .light [data-element-id] svg [stroke="hsl(155 5% 35%)"] { stroke: hsl(155 10% 60%); }
 .light [data-element-id] svg [fill="hsl(155 5% 35%)"] { fill: hsl(155 10% 60%); }
 /* Component type backgrounds */

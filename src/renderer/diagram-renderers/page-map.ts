@@ -14,10 +14,10 @@ const H_GAP = 100;
 const V_GAP = 100;
 
 const pageTypeColors: Record<string, { fill: string; titleBg: string; border: string }> = {
-  page: { fill: 'hsl(200 35% 18%)', titleBg: 'hsl(200 40% 24%)', border: 'hsl(200 50% 45%)' },
-  modal: { fill: 'hsl(280 25% 18%)', titleBg: 'hsl(280 30% 24%)', border: 'hsl(280 40% 50%)' },
-  drawer: { fill: 'hsl(35 35% 18%)', titleBg: 'hsl(35 40% 24%)', border: 'hsl(35 55% 50%)' },
-  tab: { fill: 'hsl(180 25% 18%)', titleBg: 'hsl(180 30% 24%)', border: 'hsl(180 40% 48%)' },
+  page: { fill: 'hsl(200 30% 22%)', titleBg: 'hsl(200 35% 28%)', border: 'hsl(200 50% 50%)' },
+  modal: { fill: 'hsl(280 25% 22%)', titleBg: 'hsl(280 30% 28%)', border: 'hsl(280 40% 55%)' },
+  drawer: { fill: 'hsl(35 30% 22%)', titleBg: 'hsl(35 35% 28%)', border: 'hsl(35 50% 55%)' },
+  tab: { fill: 'hsl(180 25% 22%)', titleBg: 'hsl(180 30% 28%)', border: 'hsl(180 40% 52%)' },
 };
 
 function getPageColor(type?: string): { fill: string; titleBg: string; border: string } {
@@ -74,7 +74,7 @@ export function render(element: Element): string {
   parts.push(roundedRect(0, 0, size.width, size.height, 8, {
     fill: 'hsl(160 10% 10%)',
     stroke: 'hsl(160 10% 30%)',
-    'stroke-width': 1.5,
+    'stroke-width': 2,
   }));
 
   // Title
@@ -126,7 +126,7 @@ export function render(element: Element): string {
       {
         fill: 'none',
         stroke: isConditional ? 'hsl(38 92% 50%)' : 'hsl(152 65% 55%)',
-        'stroke-width': 1.2,
+        'stroke-width': 1.5,
         'stroke-dasharray': isConditional ? '6,3' : undefined,
         'marker-end': isConditional ? 'url(#page-arrow-dashed)' : 'url(#page-arrow)',
         'stroke-opacity': 0.7,
@@ -163,7 +163,7 @@ export function render(element: Element): string {
     parts.push(roundedRect(x, y, PAGE_WIDTH, PAGE_HEIGHT, 6, {
       fill: pc.fill,
       stroke: pc.border,
-      'stroke-width': 1.2,
+      'stroke-width': 1.5,
     }));
 
     // Title bar

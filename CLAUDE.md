@@ -49,9 +49,76 @@ Bloo is a documentation platform that you (Claude Code) can use to create intera
 6. Add milestone when documentation is complete
 7. Export to HTML for sharing
 
+## Element Data Reference
+
+Field names matter — using wrong names (e.g., `label` instead of `name`) causes silent rendering failures. Use the exact field names below.
+
+### architecture_diagram
+```json
+{ "components": [{ "id": "api", "name": "API Server", "type": "service", "technology": "FastAPI" }],
+  "connections": [{ "from": "api", "to": "db", "label": "SQL queries", "protocol": "TCP" }],
+  "layers": [{ "name": "Backend", "component_ids": ["api", "db"] }] }
+```
+Types: service, database, queue, cache, client, external, gateway, worker, storage
+
+### db_schema
+```json
+{ "tables": [{ "id": "users", "name": "users", "columns": [
+    { "name": "id", "type": "SERIAL PK", "primary_key": true },
+    { "name": "email", "type": "VARCHAR(255)", "unique": true }
+  ]}],
+  "relationships": [{ "from_table": "orders", "from_column": "user_id", "to_table": "users", "to_column": "id", "type": "many_to_one" }] }
+```
+**Critical**: tables need `id` field (use table name). Relationships use `from_table`/`to_table` (NOT `from`/`to`). Type uses underscores: `one_to_one`, `one_to_many`, `many_to_one`, `many_to_many`.
+
+### sequence_diagram
+```json
+{ "actors": [{ "id": "user", "name": "User", "type": "user" },
+             { "id": "api", "name": "API Server", "type": "service" }],
+  "messages": [{ "from": "user", "to": "api", "label": "POST /login", "type": "sync", "order": 1 }] }
+```
+**Critical**: actors need `name` field (NOT `label`). Types: user, service, database, external, queue. Message types: sync, async, response, self.
+
+### page_map
+```json
+{ "pages": [{ "id": "login", "name": "Login", "route": "/login", "type": "page", "auth_required": false },
+            { "id": "dashboard", "name": "Dashboard", "route": "/dashboard", "type": "page", "auth_required": true }],
+  "navigations": [{ "from": "login", "to": "dashboard", "trigger": "login success", "condition": "authenticated" }] }
+```
+**Critical**: pages need `id` and `route` fields (NOT `path`). Always include `navigations` to show page flow arrows. Types: page, modal, drawer, tab.
+
+### flow_chart
+```json
+{ "nodes": [{ "id": "start", "name": "Start", "type": "start" },
+            { "id": "process", "name": "Process Data", "type": "process" }],
+  "edges": [{ "from": "start", "to": "process", "label": "begin" }] }
+```
+Types: start, end, process, decision, io, subprocess, delay, loop
+
+### file_tree
+```json
+{ "root": "project-name",
+  "entries": [{ "path": "src", "type": "directory", "description": "Source code" },
+              { "path": "src/main.py", "type": "file", "technology": "Python" }] }
+```
+
+### note / text_block
+Content supports markdown: `## headers`, `**bold**`, `*italic*`, `` `code` ``, `- bullets`, `1. numbered`.
+```json
+{ "content": "## Overview\n\nThis service handles **authentication** and...\n\n- JWT tokens\n- OAuth2 flow" }
+```
+
+### badge (multiple badges)
+```json
+{ "badges": [{ "label": "Python 3.12", "color": "blue" }, { "label": "Docker", "color": "#2496ED" }] }
+```
+Colors: green, blue, red, yellow, orange, purple, pink, or any hex color.
+
 ## Best Practices
 - Always provide a `reason` for changes (builds the changelog)
 - Use `bulk_add_elements` for multiple elements at once
 - Cross-reference related elements across sections
 - Tag meaningfully: critical, tech-debt, needs-review
 - Start broad (architecture), then detail (DB schemas, API maps)
+- **Always include relationship/navigation/connection data** — diagrams without connections look incomplete
+- Use markdown in notes and text blocks for proper formatting

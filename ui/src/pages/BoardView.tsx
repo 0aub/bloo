@@ -174,25 +174,31 @@ function computeLayout(board: Board, svgSizes: Record<string, { width: number; h
       // Bin-pack cards within this section
       binPackCards(secCards, secW, colX, curY + SECTION_LABEL_H);
 
-      // Section label bounds
-      const secH = sectionHeights.get(secId)!;
-      sectionLabels.push({
-        title: sec.title,
-        category: sec.category,
-        x: colX - 10,
-        y: curY - 5,
-        w: secW + 20,
-        h: secH + 15,
-      });
-
-      // Add items
+      // Add items and compute actual bounds from placed cards
+      let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
       for (const card of secCards) {
         items.push({
           element: card.element,
           section: card.section,
           pos: { x: card.x, y: card.y, w: card.w, h: card.h },
         });
+        minX = Math.min(minX, card.x);
+        minY = Math.min(minY, card.y);
+        maxX = Math.max(maxX, card.x + card.w);
+        maxY = Math.max(maxY, card.y + card.h);
       }
+
+      // Section label bounds — computed from actual card positions
+      const PAD_X = 16;
+      const PAD_BOTTOM = 16;
+      sectionLabels.push({
+        title: sec.title,
+        category: sec.category,
+        x: minX - PAD_X,
+        y: curY - 5,
+        w: (maxX - minX) + PAD_X * 2,
+        h: (maxY - curY) + PAD_BOTTOM + 5,
+      });
 
       colX += secW + SECTION_COL_GAP;
     }

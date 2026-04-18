@@ -32,16 +32,8 @@ interface BadgeItem {
   icon?: string;
 }
 
-const BADGE_GAP = 8;
-const ROW_GAP = 8;
-const MAX_ROW_WIDTH = 500;
-
-function resolveBadges(data: any): BadgeItem[] {
-  // Handle array format: data.badges = [{ label, color, icon }, ...]
-  if (Array.isArray(data.badges) && data.badges.length > 0) return data.badges;
-  // Handle single badge format: data.label, data.color, data.icon
-  if (data.label) return [{ label: data.label, color: data.color, icon: data.icon }];
-  return [];
+function getBadge(data: BadgeData): BadgeItem {
+  return { label: data.label || '', color: data.color, icon: data.icon };
 }
 
 function badgeWidth(badge: BadgeItem): number {
@@ -76,48 +68,12 @@ function renderSingleBadge(badge: BadgeItem, x: number, y: number): string {
 
 export function render(element: Element): string {
   const data = element.data as BadgeData;
-  const badges = resolveBadges(data);
-  if (badges.length === 0) {
-    return group([text(H_PADDING, PILL_HEIGHT / 2, 'No badges', {
-      fill: 'hsl(155 5% 55%)',
-      'font-size': 10,
-      'font-family': FONT_FAMILY,
-      'dominant-baseline': 'middle',
-    })]);
-  }
-
-  const parts: string[] = [];
-  let x = 0;
-  let y = 0;
-  for (const badge of badges) {
-    const w = badgeWidth(badge);
-    if (x > 0 && x + w > MAX_ROW_WIDTH) {
-      x = 0;
-      y += PILL_HEIGHT + ROW_GAP;
-    }
-    parts.push(renderSingleBadge(badge, x, y));
-    x += w + BADGE_GAP;
-  }
-
-  return group(parts);
+  const badge = getBadge(data);
+  return renderSingleBadge(badge, 0, 0);
 }
 
 export function calculateSize(element: Element): Size {
   const data = element.data as BadgeData;
-  const badges = resolveBadges(data);
-  if (badges.length === 0) return { width: 100, height: PILL_HEIGHT };
-
-  let x = 0;
-  let y = 0;
-  let maxX = 0;
-  for (const badge of badges) {
-    const w = badgeWidth(badge);
-    if (x > 0 && x + w > MAX_ROW_WIDTH) {
-      x = 0;
-      y += PILL_HEIGHT + ROW_GAP;
-    }
-    x += w + BADGE_GAP;
-    maxX = Math.max(maxX, x - BADGE_GAP);
-  }
-  return { width: maxX, height: y + PILL_HEIGHT };
+  const badge = getBadge(data);
+  return { width: badgeWidth(badge), height: PILL_HEIGHT };
 }

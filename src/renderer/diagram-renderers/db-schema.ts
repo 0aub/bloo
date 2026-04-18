@@ -352,32 +352,10 @@ function layoutTables(
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
-// Normalize tables: Claude omits `id`, use `name` as fallback
-function normalizeTables(tables: any[]): DbTable[] {
-  return tables.map(t => ({
-    ...t,
-    id: t.id || t.name || 'unknown',
-    columns: t.columns || [],
-  }));
-}
-
-// Normalize relationship fields: Claude sends `from`/`to` but interface expects `from_table`/`to_table`
-// Type uses hyphens ("many-to-one") but interface uses underscores ("many_to_one")
-function normalizeRelationships(rels: any[]): DbRelationship[] {
-  return rels.map(r => ({
-    from_table: r.from_table || r.from || '',
-    to_table: r.to_table || r.to || '',
-    from_column: r.from_column || r.label || '',
-    to_column: r.to_column || r.label || '',
-    type: (r.type || 'many_to_one').replace(/-/g, '_') as DbRelationship['type'],
-    label: r.label,
-  }));
-}
-
 export function render(element: Element): string {
   const data = element.data as DbSchemaData;
-  const tables = normalizeTables(data.tables || []);
-  const relationships = normalizeRelationships(data.relationships || []);
+  const tables = data.tables || [];
+  const relationships = data.relationships || [];
 
   if (tables.length === 0) {
     return group([
@@ -418,7 +396,7 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as DbSchemaData;
-  const tables = normalizeTables(data.tables || []);
+  const tables = data.tables || [];
 
   if (tables.length === 0) return { width: 300, height: 100 };
 

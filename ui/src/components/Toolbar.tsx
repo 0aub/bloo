@@ -16,6 +16,7 @@ interface Props {
   onToggleEdit: () => void;
   onSaveLayout: () => void;
   onExportHtml: () => void;
+  onPrintPdf: () => void;
 }
 
 function IconButton({
@@ -159,6 +160,7 @@ export default function Toolbar({
   onToggleEdit,
   onSaveLayout,
   onExportHtml,
+  onPrintPdf,
 }: Props) {
   return (
     <div
@@ -253,6 +255,9 @@ export default function Toolbar({
 
         <IconButton onClick={onExportHtml} title="Export as HTML">
           {Icons.Download}
+        </IconButton>
+        <IconButton onClick={onPrintPdf} title="Print / PDF">
+          {Icons.FileText}
         </IconButton>
       </div>
     </div>

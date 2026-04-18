@@ -42,6 +42,8 @@ export const BOARD_SHELL_HTML = `<!DOCTYPE html>
     <div id="search-results" class="search-results"></div>
   </div>
 
+  {{PRINT_CONTAINER}}
+
   <script id="board-data" type="application/json">{{BOARD_DATA}}</script>
   <script>{{BOARD_INTERACTIVITY_JS}}</script>
 </body>

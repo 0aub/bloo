@@ -19,7 +19,7 @@ const CARD_GAP = 16;
 const SECTION_COL_GAP = 40;
 const SECTION_ROW_GAP = 50;
 const SECTION_LABEL_H = 28;
-const SECTIONS_PER_ROW = 3;
+const SECTIONS_PER_ROW = 4;
 const PAD = 24;
 const CANVAS_MARGIN = 300;
 
@@ -331,13 +331,13 @@ export default function BoardView({ boardId, onBack }: Props) {
     const contentH = maxY - minY + PAD * 2;
     const vw = window.innerWidth;
     const vh = window.innerHeight - 44;
-    const s = Math.max(0.15, Math.min(vw / contentW, vh / contentH, 1));
+    const s = Math.max(0.05, Math.min(vw / contentW, vh / contentH, 1));
     const newScale = Math.round(s * 100) / 100;
     setScale(newScale);
 
     // Center the content in the viewport after scale is applied
     requestAnimationFrame(() => {
-      const wrapper = document.querySelector('.flex-1.overflow-auto') as HTMLElement;
+      const wrapper = document.querySelector('[data-canvas-wrapper]') as HTMLElement;
       if (!wrapper) return;
       const centerX = (minX - PAD + contentW / 2) * newScale;
       const centerY = (minY - PAD + contentH / 2) * newScale;
@@ -348,7 +348,7 @@ export default function BoardView({ boardId, onBack }: Props) {
 
   // Zoom
   const zoomIn = useCallback(() => setScale(s => Math.min(3, Math.round(s * 1.2 * 100) / 100)), []);
-  const zoomOut = useCallback(() => setScale(s => Math.max(0.15, Math.round(s / 1.2 * 100) / 100)), []);
+  const zoomOut = useCallback(() => setScale(s => Math.max(0.05, Math.round(s / 1.2 * 100) / 100)), []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -426,6 +426,11 @@ export default function BoardView({ boardId, onBack }: Props) {
     }
   }, [boardId, board]);
 
+  // Print / PDF — open board HTML in new tab for browser printing
+  const handlePrintPdf = useCallback(() => {
+    window.open(`/api/boards/${boardId}/export?format=pdf`, '_blank');
+  }, [boardId]);
+
   // Save layout
   const handleSaveLayout = useCallback(async () => {
     const layouts = layoutItems.map(item => ({
@@ -490,6 +495,7 @@ export default function BoardView({ boardId, onBack }: Props) {
         onToggleEdit={() => setEditMode(m => !m)}
         onSaveLayout={handleSaveLayout}
         onExportHtml={() => handleExport('html')}
+        onPrintPdf={handlePrintPdf}
       />
 
       <Canvas

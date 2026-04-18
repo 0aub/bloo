@@ -78,7 +78,7 @@ export default function Canvas({
 
       const curScale = scaleRef.current;
       const factor = e.deltaY < 0 ? 1.1 : 0.9;
-      const newScale = Math.min(3, Math.max(0.15, Math.round(curScale * factor * 100) / 100));
+      const newScale = Math.min(3, Math.max(0.05, Math.round(curScale * factor * 100) / 100));
       if (newScale === curScale) return;
 
       // Compute cursor position in canvas space (unscaled)
@@ -157,6 +157,7 @@ export default function Canvas({
   return (
     <div
       ref={wrapperRef}
+      data-canvas-wrapper="true"
       className="flex-1 overflow-auto relative"
       style={{
         cursor: panning ? 'grabbing' : 'grab',

@@ -296,15 +296,23 @@ export function createRouter(boardStore: BoardStore, historyStore: HistoryStore)
       const board = await boardStore.getBoard(req.params.id);
       const format = (req.query.format as string) || 'html';
 
+      // Sanitize filename to ASCII for Content-Disposition header
+      const safeFilename = board.name.replace(/[^\x20-\x7E]/g, '_').replace(/[/\\?%*:|"<>]/g, '_');
+
       if (format === 'html') {
         const html = renderBoardToHtml(board, {});
-        res.set('Content-Type', 'text/html');
-        res.set('Content-Disposition', `attachment; filename="${board.name}.html"`);
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        res.set('Content-Disposition', `attachment; filename="${safeFilename}.html"`);
+        res.send(html);
+      } else if (format === 'pdf') {
+        // Serve the HTML for browser-side PDF printing (open in new tab, Ctrl+P)
+        const html = renderBoardToHtml(board, {});
+        res.set('Content-Type', 'text/html; charset=utf-8');
         res.send(html);
       } else if (format === 'markdown') {
         const md = boardToMarkdown(board);
         res.set('Content-Type', 'text/markdown');
-        res.set('Content-Disposition', `attachment; filename="${board.name}.md"`);
+        res.set('Content-Disposition', `attachment; filename="${safeFilename}.md"`);
         res.send(md);
       } else if (format === 'mermaid') {
         const mm = boardToMermaid(board);

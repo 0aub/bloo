@@ -432,33 +432,37 @@ body.edit-mode .canvas-wrapper { outline: 2px solid var(--accent); outline-offse
 /* Print container (hidden until print preview) */
 #print-container {
   display: none;
-  background: #e0e0e0;
   min-height: 100vh;
   padding: 20px;
   overflow-y: auto;
 }
+/* Dark theme (default) */
+#print-container { background: hsl(160 10% 12%); }
 #print-container .print-page {
   width: 210mm; min-height: 297mm;
   padding: 14mm 16mm 18mm 16mm;
   position: relative; overflow: hidden;
   box-sizing: border-box;
-  background: white; color: #111;
+  background: var(--bg); color: var(--fg);
   margin: 0 auto 20px auto;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.4);
   font-family: 'Almarai', 'Inter', sans-serif;
 }
 #print-container .print-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 265mm; position: relative; }
-#print-container .print-cover-title { font-size: 42px; font-weight: 800; color: hsl(155 65% 30%); margin-bottom: 6px; }
-#print-container .print-cover-subtitle { font-size: 16px; color: #666; margin-bottom: 24px; }
-#print-container .print-cover-desc { font-size: 12px; color: #777; max-width: 140mm; line-height: 1.7; margin-bottom: 32px; text-align: justify; }
-#print-container .print-cover-date { font-size: 13px; color: #888; }
-#print-container .print-cover-brand { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: #ccc; letter-spacing: 1px; }
-#print-container .print-header { display: flex; justify-content: space-between; padding-bottom: 6px; margin-bottom: 10px; border-bottom: 0.5px solid #ddd; font-size: 9px; color: #999; }
+#print-container .print-cover-title { font-size: 42px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+#print-container .print-cover-subtitle { font-size: 16px; color: var(--fg-muted); margin-bottom: 24px; }
+#print-container .print-cover-desc { font-size: 12px; color: var(--fg-muted); max-width: 140mm; line-height: 1.7; margin-bottom: 32px; text-align: center; }
+#print-container .print-cover-date { font-size: 13px; color: var(--fg-muted); }
+#print-container .print-cover-brand { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: var(--fg-muted); letter-spacing: 1px; opacity: 0.5; }
+#print-container .print-header { display: flex; justify-content: space-between; padding-bottom: 6px; margin-bottom: 10px; border-bottom: 0.5px solid var(--border); font-size: 9px; color: var(--fg-muted); }
 #print-container .print-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-#print-container .print-el-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 4px; text-align: center; }
-#print-container .print-el-type { font-size: 10px; color: hsl(155 65% 30%); margin-bottom: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; }
+#print-container .print-el-title { font-size: 16px; font-weight: 700; color: var(--fg); margin-bottom: 4px; text-align: center; }
+#print-container .print-el-type { font-size: 10px; color: var(--accent); margin-bottom: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; }
 #print-container .print-el-body { max-width: 178mm; overflow: hidden; }
 #print-container .print-el-body svg { max-width: 178mm; max-height: 220mm; width: auto; height: auto; display: block; margin: 0 auto; }
+/* Light theme print pages */
+[data-theme="light"] #print-container { background: #e0e0e0; }
+[data-theme="light"] #print-container .print-page { box-shadow: 0 2px 16px rgba(0,0,0,0.15); }
 #print-container .print-footer { position: absolute; bottom: 10mm; left: 16mm; right: 16mm; display: flex; justify-content: space-between; font-size: 9px; color: #aaa; border-top: 0.5px solid #eee; padding-top: 4px; }
 /* Light SVG overrides in print preview */
 #print-container svg [fill="hsl(160 10% 10%)"] { fill: white; }

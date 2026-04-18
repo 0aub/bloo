@@ -305,10 +305,17 @@ export function createRouter(boardStore: BoardStore, historyStore: HistoryStore)
         res.set('Content-Disposition', `attachment; filename="${safeFilename}.html"`);
         res.send(html);
       } else if (format === 'pdf') {
-        // Serve the HTML with print view active and auto-trigger print dialog
+        // Serve print-ready view: shows A4 pages, hides canvas, with print button
         let html = renderBoardToHtml(board, {});
-        // Inject script to show print container and trigger print
-        const printScript = `<script>document.addEventListener('DOMContentLoaded',function(){document.getElementById('print-container').style.display='block';document.querySelector('.canvas-wrapper').style.display='none';document.querySelector('.bloo-header').style.display='none';setTimeout(function(){window.print()},500)});</script>`;
+        const printScript = `<script>document.addEventListener('DOMContentLoaded',function(){
+          document.getElementById('print-container').style.display='block';
+          var cw=document.querySelector('.canvas-wrapper');if(cw)cw.style.display='none';
+          var hd=document.querySelector('.bloo-header');if(hd)hd.style.display='none';
+          // Add a print button at the top
+          var btn=document.createElement('div');
+          btn.innerHTML='<div style="position:fixed;top:16px;right:16px;z-index:999;display:flex;gap:8px"><button onclick="window.print()" style="padding:8px 20px;background:hsl(152,65%,55%);color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600">Save as PDF</button><button onclick="window.close()" style="padding:8px 16px;background:hsl(160,8%,18%);color:hsl(0,0%,95%);border:none;border-radius:6px;cursor:pointer;font-size:14px">Close</button></div>';
+          document.body.appendChild(btn);
+        });</script>`;
         html = html.replace('</body>', printScript + '</body>');
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.send(html);

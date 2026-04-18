@@ -298,9 +298,9 @@ export default function BoardView({ boardId, onBack }: Props) {
       setSectionLabels(layout.sectionLabels);
       setCanvasSize({ w: layout.canvasWidth, h: layout.canvasHeight });
 
-      // 5. Fit and reveal
+      // 5. Fit and reveal — pass items directly since state isn't set yet
       requestAnimationFrame(() => {
-        fitAll(layout.canvasWidth, layout.canvasHeight);
+        fitAll(layout.items);
         setTimeout(() => setCanvasVisible(true), 100);
       });
     }
@@ -321,13 +321,13 @@ export default function BoardView({ boardId, onBack }: Props) {
     wrapper.scrollTop = y * scale - vh / 2;
   }, [scale]);
 
-  // Fit all: compute bounding box, scale to fit, queue scroll center
-  const fitAll = useCallback((_cw?: number, _ch?: number) => {
-    const items = layoutItems;
-    if (items.length === 0) return;
+  // Fit all: accepts optional items for initial load when state isn't set yet
+  const fitAll = useCallback((items?: LayoutItem[]) => {
+    const allItems = items || layoutItems;
+    if (allItems.length === 0) return;
 
     let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
-    for (const item of items) {
+    for (const item of allItems) {
       minX = Math.min(minX, item.pos.x);
       minY = Math.min(minY, item.pos.y);
       maxX = Math.max(maxX, item.pos.x + item.pos.w);
@@ -342,7 +342,6 @@ export default function BoardView({ boardId, onBack }: Props) {
     const s = Math.max(0.05, Math.min(vw / contentW, vh / contentH, 1));
     const newScale = Math.round(s * 100) / 100;
 
-    // Queue the center point so the useEffect scrolls after re-render
     pendingCenterRef.current = {
       x: minX - margin + contentW / 2,
       y: minY - margin + contentH / 2,

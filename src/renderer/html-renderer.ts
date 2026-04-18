@@ -81,77 +81,34 @@ function parseNoteContent(content: string): ParsedNote {
   return { mode: 'prose', kvPairs: [], plainParts: [], numberedParts: [], proseText: content };
 }
 
+// Card sizing matching the React BoardView.tsx cardSize exactly
 function measureCardSize(element: Element): { w: number; h: number } {
-  // For notes and text blocks, estimate from text content
-  if (element.type === 'note') {
-    const data = element.data as NoteData;
-    const parsed = parseNoteContent(data.content);
-    const priorityH = data.priority ? 26 : 0;
-    const notePad = 24; // note-inner padding top+bottom
-
-    if (parsed.mode === 'kv') {
-      const allEntries = [...parsed.kvPairs.map(kv => kv.key + ': ' + kv.value), ...parsed.plainParts];
-      const w = Math.min(520, Math.max(340, Math.max(...allEntries.map(e => e.length * 4.2 + 60))));
-      const valColW = w - 120; // key column ~80px + gaps
-      let contentH = 0;
-      for (const kv of parsed.kvPairs) {
-        const lines = Math.max(1, Math.ceil(kv.value.length * 6.2 / valColW));
-        contentH += lines * 18 + 12; // line height + padding
-      }
-      for (const p of parsed.plainParts) {
-        const lines = Math.max(1, Math.ceil(p.length * 6.2 / (w - 30)));
-        contentH += lines * 18 + 12;
-      }
-      return { w, h: CARD_HEADER_H + priorityH + contentH + notePad };
-    }
-
-    if (parsed.mode === 'numbered') {
-      const w = 460;
-      let contentH = 0;
-      for (const np of parsed.numberedParts) {
-        const lines = Math.max(1, Math.ceil(np.text.length * 6.2 / (w - 50)));
-        contentH += lines * 18 + 12;
-      }
-      for (const p of parsed.plainParts) {
-        const lines = Math.max(1, Math.ceil(p.length * 6.2 / (w - 30)));
-        contentH += lines * 18 + 8;
-      }
-      return { w, h: CARD_HEADER_H + priorityH + contentH + notePad };
-    }
-
-    // Prose mode
-    const w = Math.min(420, Math.max(300, data.content.length * 0.6));
-    const charsPerLine = Math.floor((w - 28) / 6.2);
-    const lines = Math.max(1, Math.ceil(data.content.length / charsPerLine));
-    return { w, h: CARD_HEADER_H + priorityH + lines * 18 + notePad };
-  }
-  if (element.type === 'text_block') {
-    const data = element.data as TextBlockData;
-    // Find longest line to determine width
-    const contentLines = data.content.split('\n');
-    const maxLineLen = Math.max(...contentLines.map(l => l.length));
-    const w = Math.max(360, Math.min(600, maxLineLen * 6.5 + 40));
-    // Calculate height from wrapped lines (CSS: font-size 12px, line-height 1.7 = 20.4px/line)
-    const LINE_H = 21;
-    const charsPerLine = Math.floor((w - 40) / 6.5);
+  if (element.type === 'note' || element.type === 'text_block') {
+    const content = (element.data as any)?.content || '';
+    const contentLines = content.split('\n');
+    const maxLineLen = Math.max(...contentLines.map((l: string) => l.length));
+    const w = Math.max(360, Math.min(580, maxLineLen * 6.2 + 60));
+    const charsPerLine = Math.max(1, Math.floor((w - 40) / 6.2));
     let totalLines = 0;
-    for (const line of contentLines) {
-      totalLines += Math.max(1, Math.ceil(line.length / charsPerLine));
-      if (line.trim() === '') totalLines += 0.5;
+    for (const ln of contentLines) {
+      if (ln.trim() === '') { totalLines += 0.4; continue; }
+      if (ln.match(/^#{1,3}\s/)) { totalLines += 1.5; continue; }
+      totalLines += Math.max(1, Math.ceil(ln.length / charsPerLine));
     }
-    return { w, h: CARD_HEADER_H + CARD_BODY_PAD + Math.ceil(totalLines) * LINE_H + 8 };
+    return { w, h: CARD_HEADER_H + Math.ceil(totalLines) * 18 + 30 };
   }
   if (element.type === 'badge') {
-    return { w: MIN_CARD_W, h: MIN_CARD_H };
+    const renderer = getRenderer(element.type);
+    const svgSize = renderer.calculateSize(element);
+    return { w: Math.max(MIN_CARD_W, svgSize.width + 20), h: MIN_CARD_H };
   }
 
-  // For diagrams, use the actual renderer calculateSize — no cap, let content determine size
   const renderer = getRenderer(element.type);
   const svgSize = renderer.calculateSize(element);
   const descH = element.description ? CARD_DESC_H : 0;
   return {
-    w: Math.max(MIN_CARD_W, svgSize.width + 20),   // 10px padding each side
-    h: Math.max(MIN_CARD_H, CARD_HEADER_H + descH + svgSize.height + 20),  // 10px padding top+bottom
+    w: Math.max(MIN_CARD_W, svgSize.width + 20),
+    h: Math.max(MIN_CARD_H, CARD_HEADER_H + descH + svgSize.height + 20),
   };
 }
 
@@ -268,7 +225,12 @@ function autoLayout(cards: CardInfo[]): { width: number; height: number } {
 }
 
 export function renderBoardToHtml(board: Board, options: RenderOptions = {}): string {
+  const CATEGORY_ORDER: Record<string, number> = {
+    project_meta: 0, system_structure: 1, data_layer: 2, api_integration: 3,
+    security: 4, infrastructure: 5, processes: 6, user_flows: 7,
+  };
   let sections = board.sections.filter(s => !s.parent_section_id);
+  sections.sort((a, b) => (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99));
   if (options.sections && options.sections.length > 0) {
     const sectionSet = new Set(options.sections);
     sections = sections.filter(s => sectionSet.has(s.id));

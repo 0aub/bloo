@@ -72,6 +72,38 @@ function flattenTree(nodes: TreeNode[], depth: number = 0): Array<{ node: TreeNo
   return result;
 }
 
+// Convert nested tree object format (sent by Claude) to flat FileEntry[] array
+function treeObjectToEntries(tree: Record<string, any>, prefix: string = ''): FileEntry[] {
+  const entries: FileEntry[] = [];
+  for (const [key, value] of Object.entries(tree)) {
+    if (key === '_description') continue;
+    const path = prefix ? `${prefix}/${key}` : key;
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Directory
+      entries.push({
+        path,
+        type: 'directory',
+        description: value._description || undefined,
+      });
+      entries.push(...treeObjectToEntries(value, path));
+    } else {
+      // File — value is a string description
+      entries.push({
+        path,
+        type: 'file',
+        description: typeof value === 'string' ? value : undefined,
+      });
+    }
+  }
+  return entries;
+}
+
+function resolveEntries(data: any): FileEntry[] {
+  if (Array.isArray(data.entries) && data.entries.length > 0) return data.entries;
+  if (data.tree && typeof data.tree === 'object') return treeObjectToEntries(data.tree);
+  return [];
+}
+
 export function render(element: Element): string {
   const data = element.data as FileTreeData;
 
@@ -82,7 +114,8 @@ export function render(element: Element): string {
   const accent = 'hsl(152 65% 55%)';
   const highlightBg = 'hsl(152 40% 15% / 0.3)';
 
-  const treeNodes = buildTree(data.entries || []);
+  const resolvedEntries = resolveEntries(data);
+  const treeNodes = buildTree(resolvedEntries);
   const flat = flattenTree(treeNodes);
   const size = calculateSize(element);
 
@@ -195,7 +228,8 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as FileTreeData;
-  const treeNodes = buildTree(data.entries || []);
+  const resolvedEntries = resolveEntries(data);
+  const treeNodes = buildTree(resolvedEntries);
   const flat = flattenTree(treeNodes);
 
   const maxDepth = flat.reduce((max, item) => Math.max(max, item.depth), 0);

@@ -325,9 +325,18 @@ function layoutActors(
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
+// Normalize actor fields: Claude sends `label` but interface expects `name`
+function normalizeActors(actors: any[]): SequenceActor[] {
+  return actors.map(a => ({
+    id: a.id || a.name || a.label || 'unknown',
+    name: a.name || a.label || a.id || 'Unknown',
+    type: a.type,
+  }));
+}
+
 export function render(element: Element): string {
   const data = element.data as SequenceDiagramData;
-  const actors = data.actors || [];
+  const actors = normalizeActors(data.actors || []);
   const messages = [...(data.messages || [])].sort((a, b) => a.order - b.order);
 
   if (actors.length === 0) {
@@ -392,7 +401,7 @@ export function render(element: Element): string {
 
 export function calculateSize(element: Element): Size {
   const data = element.data as SequenceDiagramData;
-  const actors = data.actors || [];
+  const actors = normalizeActors(data.actors || []);
   const messages = [...(data.messages || [])].sort((a, b) => a.order - b.order);
 
   if (actors.length === 0) return { width: 300, height: 100 };

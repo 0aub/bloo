@@ -312,6 +312,22 @@ body {
 [data-theme="light"] .card-body svg [stroke="hsl(0 0% 95%)"] { stroke: hsl(160 20% 30%); }
 /* Sequence diagram: muted message lines need more contrast on light bg */
 [data-theme="light"] .card-body svg [stroke="hsl(155 5% 55%)"] { stroke: hsl(155 10% 40%); }
+/* Updated renderer colors (borders/connections bumped for dark visibility) */
+[data-theme="light"] .card-body svg [stroke="hsl(160 10% 30%)"] { stroke: hsl(150 10% 75%); }
+[data-theme="light"] .card-body svg [fill="hsl(160 8% 15%)"] { fill: hsl(150 6% 94%); }
+[data-theme="light"] .card-body svg [fill="hsl(160 8% 18%)"] { fill: hsl(150 6% 93%); }
+[data-theme="light"] .card-body svg [fill="hsl(160 8% 14%)"] { fill: hsl(150 6% 95%); }
+[data-theme="light"] .card-body svg [fill="hsl(155 8% 50%)"] { fill: hsl(155 12% 50%); }
+[data-theme="light"] .card-body svg [stroke="hsl(155 8% 50%)"] { stroke: hsl(155 12% 50%); }
+/* Page map updated fills */
+[data-theme="light"] .card-body svg [fill="hsl(200 30% 22%)"] { fill: hsl(200 30% 92%); }
+[data-theme="light"] .card-body svg [fill="hsl(200 35% 28%)"] { fill: hsl(200 30% 86%); }
+[data-theme="light"] .card-body svg [fill="hsl(280 25% 22%)"] { fill: hsl(280 20% 93%); }
+[data-theme="light"] .card-body svg [fill="hsl(280 30% 28%)"] { fill: hsl(280 25% 87%); }
+[data-theme="light"] .card-body svg [fill="hsl(35 30% 22%)"] { fill: hsl(35 30% 93%); }
+[data-theme="light"] .card-body svg [fill="hsl(35 35% 28%)"] { fill: hsl(35 30% 87%); }
+[data-theme="light"] .card-body svg [fill="hsl(180 25% 22%)"] { fill: hsl(180 20% 92%); }
+[data-theme="light"] .card-body svg [fill="hsl(180 30% 28%)"] { fill: hsl(180 25% 87%); }
 
 /* SVG interactivity */
 svg .hoverable { cursor: pointer; transition: opacity 0.15s, filter 0.15s; }

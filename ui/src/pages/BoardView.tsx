@@ -252,6 +252,7 @@ export default function BoardView({ boardId, onBack }: Props) {
   const [canvasSize, setCanvasSize] = useState({ w: 2000, h: 2000 });
 
   const scrollToRef = useRef<((elementId: string) => void) | null>(null);
+  const pendingCenterRef = useRef<{ x: number; y: number } | null>(null);
 
   // Fetch board
   useEffect(() => {
@@ -307,44 +308,47 @@ export default function BoardView({ boardId, onBack }: Props) {
     buildLayout();
   }, [board]);
 
-  // Fit all: compute bounding box of all cards, scale to fit viewport, then center
-  const fitAll = useCallback((cw?: number, _ch?: number) => {
-    const items = layoutItems;
+  // Apply pending scroll center after React re-renders with new scale
+  useEffect(() => {
+    if (!pendingCenterRef.current) return;
+    const { x, y } = pendingCenterRef.current;
+    pendingCenterRef.current = null;
+    const wrapper = document.querySelector('[data-canvas-wrapper]') as HTMLElement;
+    if (!wrapper) return;
+    const vw = wrapper.clientWidth;
+    const vh = wrapper.clientHeight;
+    wrapper.scrollLeft = x * scale - vw / 2;
+    wrapper.scrollTop = y * scale - vh / 2;
+  }, [scale]);
 
-    let minX: number, minY: number, maxX: number, maxY: number;
-    if (items.length === 0) {
-      minX = 0; minY = 0;
-      maxX = cw || canvasSize.w;
-      maxY = canvasSize.h;
-    } else {
-      minX = Infinity; minY = Infinity; maxX = 0; maxY = 0;
-      for (const item of items) {
-        minX = Math.min(minX, item.pos.x);
-        minY = Math.min(minY, item.pos.y);
-        maxX = Math.max(maxX, item.pos.x + item.pos.w);
-        maxY = Math.max(maxY, item.pos.y + item.pos.h);
-      }
+  // Fit all: compute bounding box, scale to fit, queue scroll center
+  const fitAll = useCallback((_cw?: number, _ch?: number) => {
+    const items = layoutItems;
+    if (items.length === 0) return;
+
+    let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+    for (const item of items) {
+      minX = Math.min(minX, item.pos.x);
+      minY = Math.min(minY, item.pos.y);
+      maxX = Math.max(maxX, item.pos.x + item.pos.w);
+      maxY = Math.max(maxY, item.pos.y + item.pos.h);
     }
 
-    const PAD = 40;
-    const contentW = maxX - minX + PAD * 2;
-    const contentH = maxY - minY + PAD * 2;
+    const margin = 40;
+    const contentW = maxX - minX + margin * 2;
+    const contentH = maxY - minY + margin * 2;
     const vw = window.innerWidth;
     const vh = window.innerHeight - 44;
     const s = Math.max(0.05, Math.min(vw / contentW, vh / contentH, 1));
     const newScale = Math.round(s * 100) / 100;
-    setScale(newScale);
 
-    // Center the content in the viewport after scale is applied
-    requestAnimationFrame(() => {
-      const wrapper = document.querySelector('[data-canvas-wrapper]') as HTMLElement;
-      if (!wrapper) return;
-      const centerX = (minX - PAD + contentW / 2) * newScale;
-      const centerY = (minY - PAD + contentH / 2) * newScale;
-      wrapper.scrollLeft = centerX - vw / 2;
-      wrapper.scrollTop = centerY - vh / 2;
-    });
-  }, [canvasSize, layoutItems]);
+    // Queue the center point so the useEffect scrolls after re-render
+    pendingCenterRef.current = {
+      x: minX - margin + contentW / 2,
+      y: minY - margin + contentH / 2,
+    };
+    setScale(newScale);
+  }, [layoutItems]);
 
   // Zoom
   const zoomIn = useCallback(() => setScale(s => Math.min(3, Math.round(s * 1.2 * 100) / 100)), []);

@@ -305,8 +305,11 @@ export function createRouter(boardStore: BoardStore, historyStore: HistoryStore)
         res.set('Content-Disposition', `attachment; filename="${safeFilename}.html"`);
         res.send(html);
       } else if (format === 'pdf') {
-        // Serve the HTML for browser-side PDF printing (open in new tab, Ctrl+P)
-        const html = renderBoardToHtml(board, {});
+        // Serve the HTML with print view active and auto-trigger print dialog
+        let html = renderBoardToHtml(board, {});
+        // Inject script to show print container and trigger print
+        const printScript = `<script>document.addEventListener('DOMContentLoaded',function(){document.getElementById('print-container').style.display='block';document.querySelector('.canvas-wrapper').style.display='none';document.querySelector('.bloo-header').style.display='none';setTimeout(function(){window.print()},500)});</script>`;
+        html = html.replace('</body>', printScript + '</body>');
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.send(html);
       } else if (format === 'markdown') {

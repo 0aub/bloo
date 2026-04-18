@@ -405,49 +405,57 @@ function renderCardInner(element: Element): string {
   return `<div class="card-header"><div><span class="card-name">${esc(element.name)}</span><span class="status-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${statusColor};margin-left:6px;vertical-align:middle"></span></div><span class="card-type">${esc(typeLabel)}</span></div><div class="card-body">${element.description ? `<div class="card-desc">${esc(element.description)}</div>` : ''}<svg viewBox="0 0 ${svgSize.width} ${svgSize.height}" width="${svgSize.width}" height="${svgSize.height}" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg></div>`;
 }
 
+// Markdown renderer matching the React NoteCard/TextBlockCard
+function renderMarkdownHtml(text: string): string {
+  const lines = text.split('\n');
+  const out: string[] = [];
+  let inList = false;
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (trimmed === '') {
+      if (inList) { out.push('</div>'); inList = false; }
+      out.push('<div style="height:6px"></div>');
+      continue;
+    }
+    let line = esc(trimmed);
+    line = line.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    line = line.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    line = line.replace(/`([^`]+)`/g, '<code style="background:var(--bg-elevated);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>');
+
+    const h3 = trimmed.match(/^### (.+)$/);
+    const h2 = trimmed.match(/^## (.+)$/);
+    const h1 = trimmed.match(/^# (.+)$/);
+    if (h3) { if (inList) { out.push('</div>'); inList = false; } let t = esc(h3[1]).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); out.push(`<div style="font-weight:700;font-size:12px;margin:10px 0 3px;color:var(--fg);border-bottom:1px solid var(--border);padding-bottom:3px">${t}</div>`); continue; }
+    if (h2) { if (inList) { out.push('</div>'); inList = false; } let t = esc(h2[1]).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); out.push(`<div style="font-weight:700;font-size:13px;margin:12px 0 4px;color:var(--fg);border-bottom:1px solid var(--border);padding-bottom:3px">${t}</div>`); continue; }
+    if (h1) { if (inList) { out.push('</div>'); inList = false; } let t = esc(h1[1]).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); out.push(`<div style="font-weight:800;font-size:14px;margin:14px 0 5px;color:var(--fg);border-bottom:1px solid var(--border);padding-bottom:4px">${t}</div>`); continue; }
+
+    const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+    if (bullet) { if (!inList) { out.push('<div style="margin:4px 0 4px 4px">'); inList = true; } out.push(`<div style="display:flex;gap:6px;margin:1px 0;line-height:1.5"><span style="color:var(--accent);flex-shrink:0">&bull;</span><span>${line.replace(/^[-*]\s+/, '')}</span></div>`); continue; }
+
+    const numbered = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+    if (numbered) { if (!inList) { out.push('<div style="margin:4px 0 4px 4px">'); inList = true; } let c = esc(numbered[2]).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>'); out.push(`<div style="display:flex;gap:6px;margin:1px 0;line-height:1.5"><span style="color:var(--accent);font-weight:700;flex-shrink:0">${numbered[1]}.</span><span>${c}</span></div>`); continue; }
+
+    if (inList) { out.push('</div>'); inList = false; }
+    out.push(`<div style="margin:2px 0;line-height:1.6">${line}</div>`);
+  }
+  if (inList) out.push('</div>');
+  return out.join('');
+}
+
 function renderNoteCard(element: Element): string {
   const data = element.data as NoteData;
-  const color = data.color || 'blue';
-  const priority = data.priority;
-  const parsed = parseNoteContent(data.content);
+  const contentHtml = renderMarkdownHtml(data.content);
+  const colorStr = data.color as string | undefined;
+  const borderColor = colorStr === 'yellow' ? 'hsl(38 70% 45%)' : colorStr === 'green' ? 'hsl(152 50% 40%)' : colorStr === 'red' ? 'hsl(0 50% 45%)' : colorStr === 'orange' ? 'hsl(25 70% 50%)' : colorStr === 'pink' ? 'hsl(340 45% 50%)' : colorStr === 'purple' ? 'hsl(280 40% 50%)' : 'var(--accent)';
+  const priorityHtml = data.priority ? `<span style="display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;padding:1px 8px;border-radius:3px;margin-bottom:6px;background:hsl(38 50% 20%);color:hsl(38 80% 65%)">${esc(data.priority)}</span>` : '';
 
-  let contentHtml: string;
-
-  if (parsed.mode === 'kv') {
-    const rows = parsed.kvPairs.map(kv =>
-      `<div class="note-item"><div class="note-item-key">${esc(kv.key)}</div><div class="note-item-val">${esc(kv.value)}</div></div>`
-    );
-    if (parsed.plainParts.length > 0) {
-      rows.push(...parsed.plainParts.map(p =>
-        `<div class="note-item"><div class="note-item-full">${esc(p)}</div></div>`
-      ));
-    }
-    contentHtml = rows.join('');
-  } else if (parsed.mode === 'numbered') {
-    const parts: string[] = [];
-    for (const p of parsed.plainParts) {
-      parts.push(`<div class="note-prose">${esc(p)}</div>`);
-    }
-    for (const np of parsed.numberedParts) {
-      parts.push(`<div class="note-item"><div class="note-item-num">${np.num}</div><div class="note-item-val">${esc(np.text)}</div></div>`);
-    }
-    contentHtml = parts.join('');
-  } else {
-    contentHtml = `<div class="note-prose">${esc(parsed.proseText)}</div>`;
-  }
-
-  return `<div class="card-header"><span class="card-name">${esc(element.name)}</span><span class="card-type">note</span></div><div class="note-inner ${color}">${priority ? `<div class="note-priority ${priority}">${esc(priority)}</div>` : ''}${contentHtml}</div>`;
+  return `<div class="card-header"><span class="card-name">${esc(element.name)}</span><span class="card-type">note</span></div><div style="border-left:3px solid ${borderColor};border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:var(--fg);overflow:auto">${priorityHtml}${contentHtml}</div>`;
 }
 
 function renderTextBlockCard(element: Element): string {
   const data = element.data as TextBlockData;
-  const lines = data.content.split('\n');
-  const htmlContent = lines.map(l => {
-    if (!l.trim()) return '<br/>';
-    // Bold markdown-style headers
-    if (l.match(/^\d+\./)) return `<div style="margin:4px 0"><strong>${esc(l)}</strong></div>`;
-    return `<div>${esc(l)}</div>`;
-  }).join('');
-
-  return `<div class="card-header"><span class="card-name">${esc(element.name)}</span><span class="card-type">text</span></div><div class="card-body"><div class="text-block-inner">${htmlContent}</div></div>`;
+  const contentHtml = renderMarkdownHtml(data.content);
+  return `<div class="card-header"><span class="card-name">${esc(element.name)}</span><span class="card-type">text</span></div><div class="card-body" style="padding:4px 8px;font-size:12px;color:var(--fg)">${contentHtml}</div>`;
 }
